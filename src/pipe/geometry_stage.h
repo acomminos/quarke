@@ -4,15 +4,18 @@
 #include <GLFW/glfw3.h>
 
 namespace quarke {
-namespace pipe {
 
-struct Face; // XXX(acomminos)
+namespace geo {
+struct Mesh;
+};  // namespace geo
+
+namespace pipe {
 
 // Produces a G-buffer containing color, texture, depth, and normal data.
 class GeometryStage {
  public:
-  // Accumulates the provided primitive into the G-buffer.
-  void DrawFace(const Face& face);
+  // Accumulates the provided mesh into the G-buffer.
+  void DrawMesh(const geo::Mesh& mesh);
 
   // Clears the G-buffer, overwriting all attachments with zeroes.
   void Clear();

@@ -1,8 +1,27 @@
 #ifndef QUARKE_SRC_GEO_MESH_H_
 #define QUARKE_SRC_GEO_MESH_H_
 
+#include <GLFW/glfw3.h>
+#include <memory>
+
 namespace quarke {
 namespace geo {
+
+// Format of the array buffer in memory. Currently, only interleaved vertex
+// data is supported with floating point values.
+//
+// Legend:
+// Pn: position
+// Nn: normal
+// Tn: uv coords
+//
+// where n is the number of 32-bit floating point components.
+enum VertexFormat {
+  P3N3T2,
+  P3N3,
+  P3T2,
+  P3,
+};
 
 // A mesh is simply an aggregation of triangle faces.
 // XXX: idea
@@ -16,28 +35,17 @@ namespace geo {
 class Mesh {
  public:
   // Loads a mesh given a path to an obj file.
+  // TODO: support mtl.
   // Returns nullptr on failure.
   std::unique_ptr<Mesh> FromOBJ(const std::string& path);
 
   GLuint array_buffer() { return array_buffer_; }
-  GLuint element_buffer() { return array_buffer_; }
+  VertexFormat array_buffer_format() { return array_buffer_format_; }
+  GLuint element_buffer() { return element_buffer_; }
  private:
   GLuint array_buffer_;
+  VertexFormat array_buffer_format_;
   GLuint element_buffer_;
-
-  // Format of the array buffer in memory. Currently, only interleaved vertex
-  // data is supported.
-  //
-  // Legend:
-  // Pn: position
-  // Nn: normal
-  // Tn: uv coords
-  //
-  enum VertexFormat {
-    P4N4T4,
-    P4N4,
-    P4,
-  } array_buffer_format_;
 };
 
 }  // namespace geo

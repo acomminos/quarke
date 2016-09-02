@@ -3,7 +3,9 @@
 namespace quarke {
 namespace geo {
 
-std::vector<Mesh> Mesh::FromOBJ(
+std::unique_ptr<Mesh> Mesh::FromOBJ(const std::string& path) {
+
+}
 
 }  // namespace geo
 }  // namespace quarke

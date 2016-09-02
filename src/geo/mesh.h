@@ -35,17 +35,15 @@ enum VertexFormat {
 class Mesh {
  public:
   // Loads a mesh given a path to an obj file.
-  // TODO: support mtl.
+  // TODO: support mtl. should this output a single, or multiple meshes?
   // Returns nullptr on failure.
   std::unique_ptr<Mesh> FromOBJ(const std::string& path);
 
   GLuint array_buffer() { return array_buffer_; }
   VertexFormat array_buffer_format() { return array_buffer_format_; }
-  GLuint element_buffer() { return element_buffer_; }
  private:
   GLuint array_buffer_;
   VertexFormat array_buffer_format_;
-  GLuint element_buffer_;
 };
 
 }  // namespace geo

@@ -1,6 +1,6 @@
 set(QUARKE_SOURCES
     main.cc
-    pipe/stage.cc
+#   pipe/stage.cc
     pipe/geometry_stage.cc
     )
 

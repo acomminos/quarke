@@ -1,16 +1,18 @@
 #ifndef QUARKE_SRC_PIPE_GEOMETRY_STAGE_H_
 #define QUARKE_SRC_PIPE_GEOMETRY_STAGE_H_
 
+#include <GLFW/glfw3.h>
+
 namespace quarke {
 namespace pipe {
 
-struct Mesh; // XXX(acomminos)
+struct Face; // XXX(acomminos)
 
 // Produces a G-buffer containing color, texture, depth, and normal data.
 class GeometryStage {
  public:
-  // Accumulates the given mesh into the geometry stage.
-  void DrawMesh(const Mesh& mesh);
+  // Accumulates the provided primitive into the G-buffer.
+  void DrawFace(const Face& face);
 
   // Clears the G-buffer, overwriting all attachments with zeroes.
   void Clear();

@@ -9,5 +9,9 @@ void GeometryStage::DrawMesh(const Mesh& mesh) {
   // - draw triangle strips
 }
 
+void GeometryStage::Clear() {
+
+}
+
 }  // namespace pipe
 }  // namespace quarke

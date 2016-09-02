@@ -1,6 +1,7 @@
 #include "pipe/stage.h"
 
 namespace quarke {
+namespace pipe {
 
 /* static */
 std::unique_ptr<Stage> Stage::Initialize(GLuint vs, GLuint fs) {
@@ -36,4 +37,5 @@ Stage::Stage(GLuint prog) : prog_(prog), invalid_(true) {
 
 }
 
+}  // namespace pipe
 }  // namespace quarke

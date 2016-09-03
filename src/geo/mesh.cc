@@ -27,7 +27,7 @@ std::unique_ptr<Mesh> Mesh::FromOBJ(const std::string& path) {
     return nullptr;
   }
 
-  std::vector<float> data; // interleaved vertex data.
+  std::vector<GLfloat> data; // interleaved vertex data.
   bool hasNormals = attrib.normals.size() > 0;
   bool hasTexCoords = attrib.texcoords.size() > 0;
 
@@ -76,7 +76,10 @@ std::unique_ptr<Mesh> Mesh::FromOBJ(const std::string& path) {
 
   GLuint buffer;
   glGenBuffers(1, &buffer);
-  //glBufferData(
+  glBindBuffer(GL_ARRAY_BUFFER, buffer);
+  glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat),
+               (const void*) data.data(), GL_STATIC_DRAW);
+
 }
 
 }  // namespace geo

@@ -5,13 +5,24 @@ namespace quarke {
 namespace pipe {
 
 static const std::string vs_header = R"(
-  in vec4 position;
+  uniform mat4 mvp;
+
+  layout(location = 0) in vec4 position;
+
+  out vec4 color;
+  out vec4 normal;
+  out vec2 texcoord;
 )";
 
 static const std::string fs_header = R"(
-  layout(position = 0) out vec3 color;
-  layout(position = 1) out vec3 normal;
+  uniform sampler2D texture;
 
+  in vec4 color;
+  in vec4 normal;
+  in vec2 texcoord;
+
+  layout(location = 0) out vec4 outColor;
+  layout(location = 1) out vec4 outNormal;
 )";
 
 void GeometryStage::DrawMesh(const geo::Mesh& mesh) {

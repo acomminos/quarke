@@ -12,7 +12,13 @@ struct Mesh;
 namespace pipe {
 
 // Produces a G-buffer containing color, texture, depth, and normal data.
-// TODO: integrate shader template for inputs and varying outputs
+// Questions:
+// - How to manage multiple materials? They might have additional per-vertex
+//   and per-fragment attributes and shading.
+// - I'm thinking that each material should be associated with a vs+fs.
+//   That shader should use inputs and outputs specified by the geometry stage.
+//   It shouldn't need to output anything more than a color buffer value, but
+//   we should allow for custom vertex attribute binding.
 class GeometryStage {
  public:
   // Accumulates the provided mesh into the G-buffer.
@@ -24,6 +30,7 @@ class GeometryStage {
   // Resizes the stage and clears the framebuffer.
   void SetOutputSize(int width, int height);
 
+ protected:
   GLuint color_tex() const { return color_tex_; }
   GLenum color_format() const { return GL_RGBA; }
 

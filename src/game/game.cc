@@ -1,5 +1,9 @@
 #include "game/game.h"
 
+// XXX: temporary includes for testing
+#include "pipe/geometry_stage.h"
+#include "geo/mesh.h"
+
 namespace quarke {
 namespace game {
 
@@ -24,6 +28,8 @@ int Game::Run(int* argc, char** argv[]) {
 
 void Game::Loop() {
   glfwMakeContextCurrent(window_);
+
+  pipe::GeometryStage stage;
 
   while (!glfwWindowShouldClose(window_)) {
     // TODO: create pipeline, etc

@@ -4,10 +4,13 @@
 namespace quarke {
 namespace pipe {
 
-// A pipeline terminal stage that blits to the default framebuffer.
+// A terminal pipeline stage that blits to the default framebuffer.
 class BlitStage {
  public:
-  void SetInputTexture(GLuint tex);
+  BlitStage(RGBATexturePipe& texture) : texture_(texture);
+  void Blit();
+ private:
+  RGBATexturePipe& texture_;
 };
 
 }  // namespace pipe

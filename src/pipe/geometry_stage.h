@@ -2,6 +2,7 @@
 #define QUARKE_SRC_PIPE_GEOMETRY_STAGE_H_
 
 #include <GLFW/glfw3.h>
+#include "pipe/stage.h"
 
 namespace quarke {
 
@@ -19,16 +20,37 @@ namespace pipe {
 //   That shader should use inputs and outputs specified by the geometry stage.
 //   It shouldn't need to output anything more than a color buffer value, but
 //   we should allow for custom vertex attribute binding.
-class GeometryStage {
+class GeometryStage : public Stage {
  public:
   // Accumulates the provided mesh into the G-buffer.
+  // TODO: maybe add mesh? should stages even retain geometry and rendering state?
+  //       definitely add mesh to a list.
   void DrawMesh(const geo::Mesh& mesh);
 
   // Clears the G-buffer, overwriting all attachments with zeroes.
   void Clear();
 
+  // Do nothing, our rendering is cumulative.
+  void RenderImpl() override {}
+
   // Resizes the stage and clears the framebuffer.
   void SetOutputSize(int width, int height);
+
+  RGBATexturePipe color() { return RGBATexturePipe(*this, color_tex_); }
+  RGBATexturePipe normal() { return RGBATexturePipe(*this, normal_tex_); }
+  DepthTexturePipe depth() { return DepthTexturePipe(*this, depth_tex_); }
+
+  // A per-material iterator over meshes to avoid excessive shader swaps.
+  class MaterialIterator {
+   public:
+    virtual Mesh& Next() = 0;
+    virtual Material& Material() = 0;
+  }
+
+  // An iterator over a collection of meshes, per-material.
+  class MeshIterator {
+    virtual MaterialIterator& Next() = 0;
+  };
 
  protected:
   GLuint color_tex() const { return color_tex_; }

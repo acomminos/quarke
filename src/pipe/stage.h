@@ -8,45 +8,58 @@
 namespace quarke {
 namespace pipe {
 
-// A rendering stage in the quarke shader pipeline. A stage is defined as a
-// shader program taking textures as input and outputting floating RGBA data
-// to a texture.
+// A rendering stage in the quarke shader pipeline. Stage implementations
+// are typically provided with an input "pipe" from an earlier stage.
 class Stage {
  public:
-  // Initializes the stage with the given GLSL shaders.
-  // Returns the created stage on success, otherwise returns null.
-  static std::unique_ptr<Stage> Initialize(GLuint vs, GLuint fs);
-
-  // Binds a texture from a shader stage as input.
-  void SetInput(const std::string& name, GLuint texture) final;
-
-  // Renders the stage to a texture.
+  // Renders the stage. After this is called, all outputs are to be considered
+  // valid. Does nothing if the shader's outputs are already valid.
   void Render();
 
   // Invalidates the shader, requiring it to be re-rendered.
-  void Invalidate() final { invalid_ = true; }
-
-  GLuint texture() { return tex_; }
-  GLuint texture_format() { return GL_RGBA; }
+  void Invalidate() { invalid_ = true; }
 
  protected:
-  Stage();
-  ~Stage();
-
   // Subclass render implementation, sets up the shader inputs and calls a
   // glDraw function. Implementations should expect the stage output to be
   // set to its output texture, and all inputs to be bound.
   virtual void RenderImpl() = 0;
 
   bool invalid_;
+};
 
-  GLuint prog_;
-  GLuint fs_;
-  GLuint vs_;
+// A link between shader stages, intended to allow hierarchical resolution.
+// The provider of a TexturePipe should guarantee sanity of the texture.
+class TexturePipe {
+ friend Stage;
+ public:
+  TexturePipe(Stage& source, GLuint texture, GLenum format) :
+    source_(source), texture_(texture), format_(format) {}
 
-  GLuint fbo_;
-  GLuint color_tex_;
-  GLuint depth_tex_;
+  // Calls the owner to render into the texture iff it is undefined.
+  GLuint Resolve() {
+    source_.Render();
+    return texture_;
+  }
+
+  GLenum format() { return format_; }
+ private:
+  Stage& source_;
+  GLuint texture_;
+  GLenum format_;
+};
+
+// Some helpers to enforce static binding between stages.
+struct RGBATexturePipe : public TexturePipe {
+ public:
+  RGBATexturePipe(Stage& source, GLuint texture) :
+    TexturePipe(source, texture, GL_RGBA) {}
+};
+
+struct DepthTexturePipe : public TexturePipe {
+ public:
+  DepthTexturePipe(Stage& source, GLuint texture) :
+    TexturePipe(source, texture, GL_DEPTH_COMPONENT) {}
 };
 
 }  // namespace pipe

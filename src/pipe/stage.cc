@@ -3,7 +3,17 @@
 namespace quarke {
 namespace pipe {
 
+void Stage::Render() {
+  // TODO: be very, very careful with invalidation.
+  //       it's unlikely to pay off too much except with shared outputs.
+  if (invalid_) {
+    RenderImpl(scene);
+    invalid_ = false;
+  }
+}
+
 /* static */
+/*
 std::unique_ptr<Stage> Stage::Initialize(GLuint vs, GLuint fs) {
   GLuint prog = glCreateProgram();
   glAttachShader(prog, vs);
@@ -36,6 +46,7 @@ cleanup:
 Stage::Stage(GLuint prog) : prog_(prog), invalid_(true) {
 
 }
+*/
 
 }  // namespace pipe
 }  // namespace quarke

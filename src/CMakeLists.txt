@@ -6,6 +6,7 @@ set(QUARKE_SOURCES
     pipe/geometry_stage.cc
     geo/mesh.cc
     game/game.cc
+    game/scene.cc
     )
 
 add_executable(quarke ${QUARKE_SOURCES})

@@ -14,6 +14,7 @@ class Scene {
   // TODO
   //glm::mat4 world_matrix_;
   //glm::vec3 position_;
+  //float time_elapsed_;
 };
 
 }  // namespace game

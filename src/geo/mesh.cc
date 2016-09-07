@@ -82,5 +82,9 @@ std::unique_ptr<Mesh> Mesh::FromOBJ(const std::string& path) {
 
 }
 
+void Mesh::SetTransform(glm::mat4 transform) {
+  transform_ = transform;
+}
+
 }  // namespace geo
 }  // namespace quarke

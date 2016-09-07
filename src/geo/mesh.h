@@ -2,10 +2,13 @@
 #define QUARKE_SRC_GEO_MESH_H_
 
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 #include <memory>
 
 namespace quarke {
 namespace geo {
+
+struct Material;
 
 // Format of the array buffer in memory. Currently, only interleaved vertex
 // data is supported with floating point values.
@@ -39,9 +42,16 @@ class Mesh {
   // Returns nullptr on failure.
   std::unique_ptr<Mesh> FromOBJ(const std::string& path);
 
+  // Replaces the model's current transform with the given one.
+  // Coordinates are defined in world-space.
+  void SetTransform(glm::mat4 transform);
+
   GLuint array_buffer() { return array_buffer_; }
   VertexFormat array_buffer_format() { return array_buffer_format_; }
  private:
+  Material& material_;
+  glm::mat4 transform_;
+
   GLuint array_buffer_;
   VertexFormat array_buffer_format_;
 };

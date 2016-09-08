@@ -1,6 +1,8 @@
 #ifndef QUARKE_SRC_GAME_SCENE_H_
 #define QUARKE_SRC_GAME_SCENE_H_
 
+#include <glm/glm.hpp>
+
 namespace quarke {
 namespace game {
 
@@ -10,7 +12,10 @@ class Scene {
  public:
   void Render();
   void Resize(int width, int height);
+
  private:
+  Camera camera_;
+
   // TODO
   //glm::mat4 world_matrix_;
   //glm::vec3 position_;

@@ -4,6 +4,7 @@ set(QUARKE_SOURCES
     main.cc
 #   pipe/stage.cc
     pipe/geometry_stage.cc
+    geo/material.cc
     geo/mesh.cc
     game/game.cc
     game/scene.cc

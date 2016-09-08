@@ -80,6 +80,7 @@ class GeometryStage {
   GLuint normal_tex_;
   GLuint depth_tex_;
 
+  // TODO: don't use raw pointers as identifiers here!
   std::map<const geo::Material*, GLuint> shader_cache_;
 
   int out_width_;

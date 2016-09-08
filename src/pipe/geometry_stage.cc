@@ -12,12 +12,6 @@ static const GLuint VS_IN_TEXCOORD_LOCATION = 2;
 static const GLuint FS_OUT_COLOR_BUFFER = 0;
 static const GLuint FS_OUT_NORMAL_BUFFER = 1;
 
-void GeometryStage::DrawMesh(const geo::Mesh& mesh) {
-  // TODO:
-  // - bind texture
-  // - draw triangle strips
-}
-
 void GeometryStage::Clear() {
   // TODO: scoped framebuffer state
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_);

@@ -10,11 +10,26 @@ namespace game {
 // as well as the gfx pipeline.
 class Scene {
  public:
+  Scene();
+
   void Render();
-  void Resize(int width, int height);
+
+  // Called when the engine has resized the scene.
+  void OnResize(int width, int height);
+
+  int viewport_width() const { return viewport_width_; }
+  int viewport_height() const { return viewport_height_; }
 
  private:
-  //Camera camera_;
+  int viewport_width_;
+  int viewport_height_;
+
+  const float fov_; // degrees
+  const float near_;
+  const float far_;
+  glm::mat4 projection_;
+
+  // TODO: should we put the pipeline here?
 
   // TODO
   //glm::mat4 world_matrix_;

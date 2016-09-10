@@ -1,4 +1,6 @@
 #include "pipe/geometry_stage.h"
+#include "mat/material.h"
+#include "game/scene.h"
 #include "geo/mesh.h"
 #include <sstream>
 
@@ -34,7 +36,13 @@ void GeometryStage::SetOutputSize(int width, int height) {
                GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 }
 
-void GeometryStage::Render(MeshIterator& iter) {
+void GeometryStage::Render(const game::Scene& scene, MeshIterator& iter) {
+  if (scene.viewport_width() != out_width_ ||
+      scene.viewport_height() != out_height_)
+  {
+    SetOutputSize(scene.viewport_width(), scene.viewport_height());
+  }
+
   // scoped framebuffer setting? that's an extra GL call, homie.
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_);
   // note:
@@ -48,7 +56,7 @@ void GeometryStage::Render(MeshIterator& iter) {
 
   MaterialIterator* mit = nullptr;
   while ((mit = iter.Next()) != nullptr) {
-    const geo::Material* mat = mit->Material();
+    mat::Material* mat = mit->Material();
     auto cache_it = shader_cache_.find(mat);
     GLuint program;
     if (cache_it == shader_cache_.end()) {
@@ -71,6 +79,8 @@ void GeometryStage::Render(MeshIterator& iter) {
 
     glUseProgram(program);
 
+    mat->OnBindProgram(program);
+
     const geo::Mesh* mesh = nullptr;
     while ((mesh = mit->Next()) != nullptr) {
       // TODO: assert that mesh::material == material here
@@ -83,10 +93,12 @@ void GeometryStage::Render(MeshIterator& iter) {
       // oh shit, I guess we could sort of use a pointer to a material as an
       // identifier (as disappointing as that is)
     }
+
+    mat->OnUnbindProgram(program);
   }
 }
 
-GLuint GeometryStage::BuildVertexShader(const geo::Material& material) const {
+GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
   // XXX: currently, materials are unused.
   //      should populate vertex/uniform info from them.
   std::ostringstream vs;
@@ -130,7 +142,7 @@ GLuint GeometryStage::BuildVertexShader(const geo::Material& material) const {
   return shader;
 }
 
-GLuint GeometryStage::BuildFragmentShader(const geo::Material& material) const {
+GLuint GeometryStage::BuildFragmentShader(const mat::Material& material) const {
   std::ostringstream fs;
   fs << "#version 150" << std::endl;
 

@@ -7,10 +7,18 @@
 
 namespace quarke {
 
-namespace geo {
+namespace mat {
 struct Material;
+};  // namespace mat
+
+namespace game {
+struct Scene;
+};  // namespace game
+
+namespace geo {
 struct Mesh;
 };  // namespace geo
+
 
 namespace pipe {
 
@@ -24,16 +32,8 @@ namespace pipe {
 //   we should allow for custom vertex attribute binding.
 class GeometryStage {
  public:
-  // Accumulates the provided mesh into the G-buffer.
-  // TODO: maybe add mesh? should stages even retain geometry and rendering state?
-  //       definitely add mesh to a list.
-  void DrawMesh(const geo::Mesh& mesh);
-
   // Clears the G-buffer, overwriting all attachments with zeroes.
   void Clear();
-
-  // Resizes the stage and clears the framebuffer.
-  void SetOutputSize(int width, int height);
 
   // A per-material iterator over meshes to avoid excessive shader swaps.
   class MaterialIterator {
@@ -43,7 +43,7 @@ class GeometryStage {
     virtual const geo::Mesh* Next() = 0;
 
     // Returns the current material being iterated over.
-    virtual const geo::Material* Material() = 0;
+    virtual mat::Material* Material() = 0;
   };
 
   // An iterator over a collection of meshes, per-material.
@@ -55,7 +55,7 @@ class GeometryStage {
   };
 
   // Iterates over the given mesh iterator, drawing each one per-material.
-  void Render(MeshIterator& iter);
+  void Render(const game::Scene& scene, MeshIterator& iter);
 
  protected:
   GLuint color_tex() const { return color_tex_; }
@@ -68,13 +68,15 @@ class GeometryStage {
   GLuint depth_format() const { return GL_DEPTH_COMPONENT; }
 
  private:
+  void SetOutputSize(int width, int height);
+
   // Constructs a vertex shader for the given material.
   // Returns 0 on failure.
-  GLuint BuildVertexShader(const geo::Material& material) const;
+  GLuint BuildVertexShader(const mat::Material& material) const;
 
   // Constructs a fragment shader for the given material.
   // Returns 0 on failure.
-  GLuint BuildFragmentShader(const geo::Material& material) const;
+  GLuint BuildFragmentShader(const mat::Material& material) const;
 
   GLuint fbo_;
   GLuint color_tex_;
@@ -82,7 +84,7 @@ class GeometryStage {
   GLuint depth_tex_;
 
   // TODO: don't use raw pointers as identifiers here!
-  std::map<const geo::Material*, GLuint> shader_cache_;
+  std::map<const mat::Material*, GLuint> shader_cache_;
 
   int out_width_;
   int out_height_;

@@ -14,7 +14,7 @@ class Scene {
   void Resize(int width, int height);
 
  private:
-  Camera camera_;
+  //Camera camera_;
 
   // TODO
   //glm::mat4 world_matrix_;

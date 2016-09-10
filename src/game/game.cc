@@ -28,6 +28,7 @@ int Game::Run(int* argc, char** argv[]) {
 
 void Game::Loop() {
   glfwMakeContextCurrent(window_);
+  gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 
   pipe::GeometryStage stage;
 

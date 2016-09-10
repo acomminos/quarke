@@ -1,6 +1,7 @@
 #ifndef QUARKE_SRC_MAT_MATERIAL_H_
 #define QUARKE_SRC_MAT_MATERIAL_H_
 
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <sstream>
 

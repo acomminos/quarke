@@ -1,4 +1,5 @@
-find_package(OpenGL REQUIRED)
+set(GLAD_SOURCES glad/src/glad.c)
+set(GLAD_INCLUDE_DIR glad/include)
 
 set(QUARKE_SOURCES
     main.cc
@@ -8,15 +9,11 @@ set(QUARKE_SOURCES
     geo/mesh.cc
     game/game.cc
     game/scene.cc
+    ${GLAD_SOURCES}
     )
 
 add_executable(quarke ${QUARKE_SOURCES})
-
-target_link_libraries(quarke glfw tinyobjloader ${OPENGL_gl_LIBRARY})
-target_compile_definitions(quarke PUBLIC -DGLFW_INCLUDE_GLCOREARB)
+target_link_libraries(quarke glfw tinyobjloader)
 target_include_directories(quarke PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(quarke PUBLIC ../third_party/tinyobjloader)
-target_include_directories(quarke PUBLIC ${OPENGL_INCLUDE_DIR})
-
-# this is a bit dodgy. i hate manual runtime linking so i'm ok with this for now
-target_compile_definitions(quarke PUBLIC -DGL_GLEXT_PROTOTYPES)
+target_include_directories(quarke PUBLIC ${GLAD_INCLUDE_DIR})

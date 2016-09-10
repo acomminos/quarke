@@ -1,6 +1,7 @@
 #ifndef QUARKE_SRC_GAME_GAME_H_
 #define QUARKE_SRC_GAME_GAME_H_
 
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
 namespace quarke {

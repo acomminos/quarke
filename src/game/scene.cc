@@ -5,8 +5,10 @@
 namespace quarke {
 namespace game {
 
-Scene::Scene() : fov_(45.0), near_(0.1), far_(1000.0) {
+Scene::Scene(int width, int height)
+  : viewport_width_(width), viewport_height_(height)
   // XXX: tmp
+  , fov_(45.0), near_(0.1), far_(1000.0) {
 }
 
 void Scene::Render() {

@@ -4,13 +4,18 @@
 #include <glm/glm.hpp>
 
 namespace quarke {
+
+namespace pipe {
+class GeometryStage;
+}  // namespace pipe
+
 namespace game {
 
 // A scene manages the rendering world state (such as the projection matrix),
 // as well as the gfx pipeline.
 class Scene {
  public:
-  Scene();
+  Scene(int width, int height);
 
   void Render();
 
@@ -30,6 +35,7 @@ class Scene {
   glm::mat4 projection_;
 
   // TODO: should we put the pipeline here?
+  std::unique_ptr<pipe::GeometryStage> geom_;
 
   // TODO
   //glm::mat4 world_matrix_;

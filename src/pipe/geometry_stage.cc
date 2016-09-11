@@ -126,10 +126,11 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
   // material.BuildVertexShader(position, normal, texcoord)
 
   vs << "void main(void) {"
-     << "outNormal = normal;"
-     << "outTexcoord = texcoord;"
      // XXX: hwhite test
-     << "outColor = vec4(1.0, 1.0, 1.0, 1.0);"
+     << "vColor = vec4(1.0, 1.0, 1.0, 1.0);"
+     << "vNormal = normal;"
+     << "vTexcoord = texcoord;"
+     << "gl_Position = mvp_matrix * position;"
      << "}";
 
   GLuint shader = glCreateShader(GL_VERTEX_SHADER);

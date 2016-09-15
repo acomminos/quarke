@@ -13,6 +13,7 @@ void Scene::Render() {
     //       in addition, make the mesh interface somewhat exposed.
     geom_ = std::make_unique<pipe::GeometryStage>();
   }
+  // geom_->Render(camera_, TODO);
 }
 
 void Scene::OnResize(int width, int height) {

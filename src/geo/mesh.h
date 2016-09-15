@@ -45,10 +45,11 @@ class Mesh {
 
   // Replaces the model's current transform with the given one.
   // Coordinates are defined in world-space.
-  void SetTransform(glm::mat4 transform);
+  void set_transform(const glm::mat4& transform) { transform_ = transform; }
+  glm::mat4 transform() const { return transform_; }
 
-  GLuint array_buffer() { return array_buffer_; }
-  VertexFormat array_buffer_format() { return array_buffer_format_; }
+  GLuint array_buffer() const { return array_buffer_; }
+  VertexFormat array_buffer_format() const { return array_buffer_format_; }
  private:
   Material& material_;
   glm::mat4 transform_;

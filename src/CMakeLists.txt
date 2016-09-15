@@ -1,3 +1,5 @@
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DQUARKE_DEBUG")
+
 set(GLAD_SOURCES glad/src/glad.c)
 set(GLAD_INCLUDE_DIR glad/include)
 

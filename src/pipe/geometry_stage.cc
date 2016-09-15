@@ -2,10 +2,14 @@
 #include "mat/material.h"
 #include "game/camera.h"
 #include "geo/mesh.h"
+#include <glm/gtc/type_ptr.hpp>
+#include <iostream>
 #include <sstream>
 
 namespace quarke {
 namespace pipe {
+
+static const char*  UNIFORM_MVP_MATRIX_NAME = "mvp_matrix";
 
 static const GLuint VS_IN_POSITION_LOCATION = 0;
 static const GLuint VS_IN_NORMAL_LOCATION = 1;
@@ -56,6 +60,8 @@ void GeometryStage::Render(const game::Camera& camera, MeshIterator& iter) {
   // we define their locations internal to this class.
   glDrawBuffers(2, (const GLenum[]) { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 });
 
+  glm::mat4 vp_matrix = camera.Compute();
+
   MaterialIterator* mit = nullptr;
   while ((mit = iter.Next()) != nullptr) {
     mat::Material* mat = mit->Material();
@@ -83,6 +89,8 @@ void GeometryStage::Render(const game::Camera& camera, MeshIterator& iter) {
 
     mat->OnBindProgram(program);
 
+    GLuint mvp_location = glGetUniformLocation(program, UNIFORM_MVP_MATRIX_NAME);
+
     const geo::Mesh* mesh = nullptr;
     while ((mesh = mit->Next()) != nullptr) {
       // TODO: assert that mesh::material == material here
@@ -94,6 +102,22 @@ void GeometryStage::Render(const game::Camera& camera, MeshIterator& iter) {
 
       // oh shit, I guess we could sort of use a pointer to a material as an
       // identifier (as disappointing as that is)
+      glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
+      switch (mesh->array_buffer_format()) {
+        case geo::VertexFormat::P3N3T2:
+          glEnableVertexAttribArray(VS_IN_NORMAL_LOCATION);
+          glEnableVertexAttribArray(VS_IN_TEXCOORD_LOCATION);
+          break;
+        case geo::VertexFormat::P3N3:
+          glEnableVertexAttribArray(VS_IN_NORMAL_LOCATION);
+          break;
+        case geo::VertexFormat::P3T2:
+          glEnableVertexAttribArray(VS_IN_TEXCOORD_LOCATION);
+          break;
+      }
+
+      glm::mat4 mvp_matrix = vp_matrix * mesh->transform();
+      glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
     }
 
     mat->OnUnbindProgram(program);
@@ -106,7 +130,7 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
   std::ostringstream vs;
   vs << "#version 150" << std::endl;
 
-  vs << "uniform mat4 mvp_matrix;";
+  vs << "uniform mat4 " << UNIFORM_MVP_MATRIX_NAME << ";";
 
   vs << "layout(location = " << VS_IN_POSITION_LOCATION << ")"
      << "in vec4 position;";
@@ -132,8 +156,13 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
      << "vColor = vec4(1.0, 1.0, 1.0, 1.0);"
      << "vNormal = normal;"
      << "vTexcoord = texcoord;"
-     << "gl_Position = mvp_matrix * position;"
+     << "gl_Position = " << UNIFORM_MVP_MATRIX_NAME << " * position;"
      << "}";
+
+#ifdef QUARKE_DEBUG
+  std::cout << "[gs] geometry stage generated vertex shader:"
+            << std::endl << vs.str() << std::endl;
+#endif  // QUARKE_DEBUG
 
   GLuint shader = glCreateShader(GL_VERTEX_SHADER);
   std::string str = vs.str();
@@ -149,7 +178,7 @@ GLuint GeometryStage::BuildFragmentShader(const mat::Material& material) const {
   std::ostringstream fs;
   fs << "#version 150" << std::endl;
 
-  fs << "uniform mat4 mvp_matrix;";
+  fs << "uniform mat4 " << UNIFORM_MVP_MATRIX_NAME << ";";
 
   // TODO: populate material's texture (if applicable)
   //fs << "uniform sampler2D texture;";
@@ -170,7 +199,11 @@ GLuint GeometryStage::BuildFragmentShader(const mat::Material& material) const {
      << "outNormal = vNormal;"
      << "}";
 
-  // fetching documentation for std::ostringstream...
+#ifdef QUARKE_DEBUG
+  std::cout << "[gs] geometry stage generated fragment shader:"
+            << std::endl << fs.str() << std::endl;
+#endif  // QUARKE_DEBUG
+
   GLuint shader = glCreateShader(GL_FRAGMENT_SHADER);
   std::string str = fs.str();
   GLint length = str.length();

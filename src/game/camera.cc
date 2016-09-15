@@ -25,7 +25,7 @@ void Camera::SetViewport(int width, int height) {
   InvalidateProjection();
 }
 
-glm::mat4 Camera::Compute() {
+glm::mat4 Camera::Compute() const {
   return projection_ * view_;
 }
 

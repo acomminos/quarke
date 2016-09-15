@@ -12,7 +12,7 @@ struct Material;
 };  // namespace mat
 
 namespace game {
-struct Scene;
+struct Camera;
 };  // namespace game
 
 namespace geo {
@@ -55,7 +55,7 @@ class GeometryStage {
   };
 
   // Iterates over the given mesh iterator, drawing each one per-material.
-  void Render(const game::Scene& scene, MeshIterator& iter);
+  void Render(const game::Camera& camera, MeshIterator& iter);
 
  protected:
   GLuint color_tex() const { return color_tex_; }

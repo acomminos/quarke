@@ -1,6 +1,6 @@
 #include "pipe/geometry_stage.h"
 #include "mat/material.h"
-#include "game/scene.h"
+#include "game/camera.h"
 #include "geo/mesh.h"
 #include <sstream>
 
@@ -36,11 +36,13 @@ void GeometryStage::SetOutputSize(int width, int height) {
                GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 }
 
-void GeometryStage::Render(const game::Scene& scene, MeshIterator& iter) {
-  if (scene.viewport_width() != out_width_ ||
-      scene.viewport_height() != out_height_)
+void GeometryStage::Render(const game::Camera& camera, MeshIterator& iter) {
+  if (camera.viewport_width() != out_width_ ||
+      camera.viewport_height() != out_height_)
   {
-    SetOutputSize(scene.viewport_width(), scene.viewport_height());
+    // TODO: this doesn't manage camera switching very well.
+    //       perhaps we shouldn't reuse stages with different cameras.
+    SetOutputSize(camera.viewport_width(), camera.viewport_height());
   }
 
   // scoped framebuffer setting? that's an extra GL call, homie.

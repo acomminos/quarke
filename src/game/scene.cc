@@ -1,26 +1,22 @@
 #include "game/scene.h"
 
-#include <glm/gtc/matrix_transform.hpp>
-
 namespace quarke {
 namespace game {
 
 Scene::Scene(int width, int height)
-  : viewport_width_(width), viewport_height_(height)
-  // XXX: tmp
-  , fov_(45.0), near_(0.1), far_(1000.0) {
+  : camera_(width, height) {
 }
 
 void Scene::Render() {
-  // TODO
+  if (!geom_) {
+    // TODO: instantiate this elsewhere where we can handle failures.
+    //       in addition, make the mesh interface somewhat exposed.
+    geom_ = std::make_unique<pipe::GeometryStage>();
+  }
 }
 
 void Scene::OnResize(int width, int height) {
-  viewport_width_ = width;
-  viewport_height_ = height;
-  projection_ = glm::perspective(fov_, (float) width / (float) height, near_,
-                                 far_);
-  // TODO
+  camera_.SetViewport(width, height);
 }
 
 }  // namespace game

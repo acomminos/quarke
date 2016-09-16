@@ -27,6 +27,26 @@ enum VertexFormat {
   P3,
 };
 
+// A lightweight wrapper around a GL vertex data buffer to be used for sharing
+// immutable buffers between meshes.
+class VertexBuffer {
+ public:
+  // Creates a new GL buffer owned by this VertexBuffer.
+  static std::shared_ptr<VertexBuffer> Create(VertexFormat format);
+
+  // Wraps a vertex buffer, assuming ownership.
+  VertexBuffer(VertexFormat format, GLuint buffer);
+  VertexBuffer(const VertexBuffer& buffer) = delete;
+  VertexBuffer(VertexBuffer&& buffer) = delete;
+  ~VertexBuffer();
+
+  GLuint buffer() const { return buffer_; }
+ private:
+
+  VertexFormat format_;
+  GLuint buffer_;
+};
+
 // A mesh is simply an aggregation of triangle faces.
 // XXX: idea
 // - split rendering passes batched by texture
@@ -50,12 +70,14 @@ class Mesh {
 
   GLuint array_buffer() const { return array_buffer_; }
   VertexFormat array_buffer_format() const { return array_buffer_format_; }
+  GLuint num_vertices() const { return num_vertices_; }
  private:
   Material& material_;
   glm::mat4 transform_;
 
   GLuint array_buffer_;
   VertexFormat array_buffer_format_;
+  GLuint num_vertices_;
 };
 
 }  // namespace geo

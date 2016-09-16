@@ -7,8 +7,11 @@
 namespace quarke {
 namespace game {
 
+static Game* current_game;
+
 /* static */
 int Game::Run(int* argc, char** argv[]) {
+  assert(!current_game);
   if (!glfwInit())
     return -1;
 
@@ -20,8 +23,10 @@ int Game::Run(int* argc, char** argv[]) {
   }
 
   Game game(window);
+  current_game = &game;
   game.Loop();
 
+  current_game = nullptr;
   glfwTerminate();
   return 0;
 }
@@ -35,7 +40,6 @@ void Game::Loop() {
   Scene scene(width, height); // XXX: TEMP
 
   glfwSetFramebufferSizeCallback(window_, [](GLFWwindow*, int width, int height) {
-      // TODO
   });
 
   while (!glfwWindowShouldClose(window_)) {

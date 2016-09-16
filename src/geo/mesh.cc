@@ -11,6 +11,22 @@
 namespace quarke {
 namespace geo {
 
+/* static */
+std::shared_ptr<VertexBuffer> VertexBuffer::Create(VertexFormat format) {
+  GLuint buffer;
+  glGenBuffers(1, &buffer);
+  // TODO: should we error check here? don't think we can run out of vram.
+  return std::make_shared<VertexBuffer>(format, buffer);
+}
+
+VertexBuffer::VertexBuffer(VertexFormat format, GLuint buffer)
+  : format_(format), buffer_(buffer) {
+}
+
+VertexBuffer::~VertexBuffer() {
+  glDeleteBuffers(1, &buffer_);
+}
+
 std::unique_ptr<Mesh> Mesh::FromOBJ(const std::string& path) {
   tinyobj::attrib_t attrib;
   std::vector<tinyobj::shape_t> shapes;
@@ -80,7 +96,6 @@ std::unique_ptr<Mesh> Mesh::FromOBJ(const std::string& path) {
   glBindBuffer(GL_ARRAY_BUFFER, buffer);
   glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat),
                (const void*) data.data(), GL_STATIC_DRAW);
-
 }
 
 }  // namespace geo

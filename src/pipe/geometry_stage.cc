@@ -9,7 +9,7 @@
 namespace quarke {
 namespace pipe {
 
-static const char*  UNIFORM_MVP_MATRIX_NAME = "mvp_matrix";
+static const char* UNIFORM_MVP_MATRIX_NAME = "mvp_matrix";
 
 static const GLuint VS_IN_POSITION_LOCATION = 0;
 static const GLuint VS_IN_NORMAL_LOCATION = 1;
@@ -102,16 +102,18 @@ void GeometryStage::Render(const game::Camera& camera, MeshIterator& iter) {
 
       // oh shit, I guess we could sort of use a pointer to a material as an
       // identifier (as disappointing as that is)
-      glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
       switch (mesh->array_buffer_format()) {
         case geo::VertexFormat::P3N3T2:
+          glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
           glEnableVertexAttribArray(VS_IN_NORMAL_LOCATION);
           glEnableVertexAttribArray(VS_IN_TEXCOORD_LOCATION);
           break;
         case geo::VertexFormat::P3N3:
+          glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
           glEnableVertexAttribArray(VS_IN_NORMAL_LOCATION);
           break;
         case geo::VertexFormat::P3T2:
+          glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
           glEnableVertexAttribArray(VS_IN_TEXCOORD_LOCATION);
           break;
       }

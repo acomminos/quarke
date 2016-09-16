@@ -91,11 +91,17 @@ std::unique_ptr<Mesh> Mesh::FromOBJ(const std::string& path) {
     }
   }
 
-  GLuint buffer;
-  glGenBuffers(1, &buffer);
+  auto vb = VertexBuffer::Create(format);
+  GLuint buffer = vb->buffer();
   glBindBuffer(GL_ARRAY_BUFFER, buffer);
   glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat),
                (const void*) data.data(), GL_STATIC_DRAW);
+
+  return std::make_unique<Mesh>(vb, attrib.vertices.size());
+}
+
+Mesh::Mesh(std::shared_ptr<VertexBuffer> array_buffer, GLuint num_vertices)
+  : array_buffer_(array_buffer), num_vertices_(num_vertices) {
 }
 
 }  // namespace geo

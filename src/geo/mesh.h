@@ -40,6 +40,7 @@ class VertexBuffer {
   VertexBuffer(VertexBuffer&& buffer) = delete;
   ~VertexBuffer();
 
+  VertexFormat format() const { return format_; }
   GLuint buffer() const { return buffer_; }
  private:
 
@@ -63,20 +64,22 @@ class Mesh {
   // Returns nullptr on failure.
   std::unique_ptr<Mesh> FromOBJ(const std::string& path);
 
+  // Creates a new mesh using the default material and vertex data.
+  Mesh(std::shared_ptr<VertexBuffer> array_buffer, GLuint num_vertices);
+
   // Replaces the model's current transform with the given one.
   // Coordinates are defined in world-space.
   void set_transform(const glm::mat4& transform) { transform_ = transform; }
   glm::mat4 transform() const { return transform_; }
 
-  GLuint array_buffer() const { return array_buffer_; }
-  VertexFormat array_buffer_format() const { return array_buffer_format_; }
+  VertexBuffer& array_buffer() const { return *array_buffer_; }
   GLuint num_vertices() const { return num_vertices_; }
  private:
-  Material& material_;
+  // TODO. simple material ownership might not cut it.
+  //Material& material_;
   glm::mat4 transform_;
 
-  GLuint array_buffer_;
-  VertexFormat array_buffer_format_;
+  std::shared_ptr<VertexBuffer> array_buffer_;
   GLuint num_vertices_;
 };
 

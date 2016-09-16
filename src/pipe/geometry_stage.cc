@@ -102,24 +102,43 @@ void GeometryStage::Render(const game::Camera& camera, MeshIterator& iter) {
 
       // oh shit, I guess we could sort of use a pointer to a material as an
       // identifier (as disappointing as that is)
-      switch (mesh->array_buffer_format()) {
+
+      // TODO: switch to using VAOs. we might be able to make our bindings
+      //       deterministic across materials.
+      geo::VertexBuffer& vb = mesh->array_buffer();
+      switch (vb.format()) {
         case geo::VertexFormat::P3N3T2:
           glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
           glEnableVertexAttribArray(VS_IN_NORMAL_LOCATION);
           glEnableVertexAttribArray(VS_IN_TEXCOORD_LOCATION);
+
+          glBindBuffer(GL_ARRAY_BUFFER, vb.buffer());
+          glVertexAttribPointer(VS_IN_POSITION_LOCATION, sizeof(GLfloat) * 3,
+                                GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3 + 2),
+                                (void*)0);
+          glVertexAttribPointer(VS_IN_NORMAL_LOCATION, sizeof(GLfloat) * 3,
+                                GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3 + 2),
+                                (void*)(sizeof(GLfloat) * 3));
+          glVertexAttribPointer(VS_IN_TEXCOORD_LOCATION, sizeof(GLfloat) * 2,
+                                GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3 + 2),
+                                (void*)(sizeof(GLfloat) * (3 + 3)));
           break;
         case geo::VertexFormat::P3N3:
           glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
           glEnableVertexAttribArray(VS_IN_NORMAL_LOCATION);
+          assert(false); // TODO
           break;
         case geo::VertexFormat::P3T2:
           glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
           glEnableVertexAttribArray(VS_IN_TEXCOORD_LOCATION);
+          assert(false); // TODO
           break;
       }
 
       glm::mat4 mvp_matrix = vp_matrix * mesh->transform();
       glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
+
+      glDrawArrays(GL_TRIANGLES, 0, mesh->num_vertices());
     }
 
     mat->OnUnbindProgram(program);

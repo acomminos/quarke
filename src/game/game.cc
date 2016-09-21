@@ -45,6 +45,10 @@ void Game::Loop() {
   glfwMakeContextCurrent(window_);
   gladLoadGLLoader((GLADloadproc) glfwGetProcAddress);
 
+#ifdef QUARKE_DEBUG
+  glEnable(GL_DEBUG_OUTPUT);
+#endif  // QUARKE_DEBUG
+
   int width, height;
   glfwGetFramebufferSize(window_, &width, &height);
   Scene scene(width, height); // XXX: TEMP

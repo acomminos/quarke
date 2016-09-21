@@ -6,6 +6,7 @@ set(GLAD_INCLUDE_DIR glad/include)
 set(QUARKE_SOURCES
     main.cc
     pipe/geometry_stage.cc
+    pipe/phong_stage.cc
     mat/solid_material.cc
     geo/mesh.cc
     game/camera.cc
@@ -19,3 +20,9 @@ target_link_libraries(quarke glfw tinyobjloader)
 target_include_directories(quarke PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(quarke PUBLIC ../third_party/tinyobjloader)
 target_include_directories(quarke PUBLIC ${GLAD_INCLUDE_DIR})
+
+# Copy over the models directory on modification.
+add_custom_command(TARGET quarke POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy_directory
+                   ${CMAKE_SOURCE_DIR}/model
+                   ${CMAKE_BINARY_DIR}/model)

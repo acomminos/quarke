@@ -8,7 +8,7 @@ Scene::Scene(int width, int height)
   : camera_(width, height)
   , rot(0) {
   // XXX: testing
-  meshes_.push_back(geo::Mesh::FromOBJ("../model/teapot.obj"));
+  meshes_.push_back(geo::Mesh::FromOBJ("model/teapot.obj"));
 }
 
 void Scene::Update(float dt) {

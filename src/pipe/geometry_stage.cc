@@ -10,6 +10,7 @@ namespace quarke {
 namespace pipe {
 
 static const char* UNIFORM_MVP_MATRIX_NAME = "mvp_matrix";
+static const char* UNIFORM_SAMPLER_MATRIX_NAME = "sampler";
 
 static const GLuint VS_IN_POSITION_LOCATION = 0;
 static const GLuint VS_IN_NORMAL_LOCATION = 1;
@@ -40,7 +41,7 @@ void GeometryStage::SetOutputSize(int width, int height) {
                GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 }
 
-void GeometryStage::Render(const game::Camera& camera, MeshIterator& iter) {
+void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter) {
   if (camera.viewport_width() != out_width_ ||
       camera.viewport_height() != out_height_)
   {
@@ -62,8 +63,8 @@ void GeometryStage::Render(const game::Camera& camera, MeshIterator& iter) {
 
   glm::mat4 vp_matrix = camera.Compute();
 
-  MaterialIterator* mit = nullptr;
-  while ((mit = iter.Next()) != nullptr) {
+  MaterialMeshIterator* mit = nullptr;
+  while ((mit = iter.NextMaterial()) != nullptr) {
     mat::Material* mat = mit->Material();
     auto cache_it = shader_cache_.find(mat);
     GLuint program;
@@ -151,33 +152,33 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
   std::ostringstream vs;
   vs << "#version 150" << std::endl;
 
-  vs << "uniform mat4 " << UNIFORM_MVP_MATRIX_NAME << ";";
+  vs << "uniform mat4 " << UNIFORM_MVP_MATRIX_NAME << ";" << std::endl;
 
-  vs << "layout(location = " << VS_IN_POSITION_LOCATION << ")"
-     << "in vec4 position;";
-  vs << "layout(location = " << VS_IN_NORMAL_LOCATION << ")"
-     << "in vec4 normal;";
-  vs << "layout(location = " << VS_IN_TEXCOORD_LOCATION << ")"
-     << "in vec2 texcoord;";
+  vs << "layout(location = " << VS_IN_POSITION_LOCATION << ") "
+     << "in vec4 position;" << std::endl;
+  vs << "layout(location = " << VS_IN_NORMAL_LOCATION << ") "
+     << "in vec4 normal;" << std::endl;
+  vs << "layout(location = " << VS_IN_TEXCOORD_LOCATION << ") "
+     << "in vec2 texcoord;" << std::endl;
 
   // XXX: do we even want to deal with color vs. texturing here?
   //      we could probably delegate this to material implementations.
   //      let's not get ahead of ourselves though with plumbing.
   //      ( ͡° ͜ʖ ͡°)
-  vs << "out vec4 vColor;";
-  vs << "out vec4 vNormal;";
-  vs << "out vec2 vTexcoord;";
+  vs << "out vec4 vColor;" << std::endl;
+  vs << "out vec4 vNormal;" << std::endl;
+  vs << "out vec2 vTexcoord;" << std::endl;
 
   // XXX: default placeholder material
   // TODO: source from material here
   // material.BuildVertexShader(position, normal, texcoord)
 
-  vs << "void main(void) {"
+  vs << "void main(void) {" << std::endl
      // XXX: hwhite test
-     << "vColor = vec4(1.0, 1.0, 1.0, 1.0);"
-     << "vNormal = normal;"
-     << "vTexcoord = texcoord;"
-     << "gl_Position = " << UNIFORM_MVP_MATRIX_NAME << " * position;"
+     << "vColor = vec4(1.0, 1.0, 1.0, 1.0);" << std::endl
+     << "vNormal = normal;" << std::endl
+     << "vTexcoord = texcoord;" << std::endl
+     << "gl_Position = " << UNIFORM_MVP_MATRIX_NAME << " * position;" << std::endl
      << "}";
 
 #ifdef QUARKE_DEBUG
@@ -199,25 +200,23 @@ GLuint GeometryStage::BuildFragmentShader(const mat::Material& material) const {
   std::ostringstream fs;
   fs << "#version 150" << std::endl;
 
-  fs << "uniform mat4 " << UNIFORM_MVP_MATRIX_NAME << ";";
+  fs << "uniform mat4 " << UNIFORM_MVP_MATRIX_NAME << ";" << std::endl;
+  fs << "uniform sampler2D " << UNIFORM_SAMPLER_MATRIX_NAME << ";" << std::endl;
 
-  // TODO: populate material's texture (if applicable)
-  //fs << "uniform sampler2D texture;";
+  fs << "in vec4 vColor;" << std::endl;
+  fs << "in vec4 vNormal;" << std::endl;
+  fs << "in vec4 vTexcoord;" << std::endl;
 
-  fs << "in vec4 vColor";
-  fs << "in vec4 vNormal";
-  fs << "in vec4 vTexcoord";
-
-  fs << "layout(location = " << FS_OUT_COLOR_BUFFER << ")"
-     << "out vec4 outColor";
-  fs << "layout(location = " << FS_OUT_NORMAL_BUFFER << ")"
-     << "out vec4 outNormal";
+  fs << "layout(location = " << FS_OUT_COLOR_BUFFER << ") "
+     << "out vec4 outColor;" << std::endl;
+  fs << "layout(location = " << FS_OUT_NORMAL_BUFFER << ") "
+     << "out vec4 outNormal;" << std::endl;
 
   // XXX: default placeholder material (again)
   // call upon dat material to make frags
-  fs << "void main(void) {"
-     << "outColor = vColor;"
-     << "outNormal = vNormal;"
+  fs << "void main(void) {" << std::endl
+     << "outColor = vColor;" << std::endl
+     << "outNormal = vNormal;" << std::endl
      << "}";
 
 #ifdef QUARKE_DEBUG

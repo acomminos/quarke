@@ -22,6 +22,25 @@ struct Mesh;
 
 namespace pipe {
 
+// A per-material iterator over meshes to avoid excessive shader swaps.
+class MaterialMeshIterator {
+  public:
+    // Returns the next mesh with the current material.
+    // Returns nullptr if we've iterated over all meshes.
+    virtual const geo::Mesh* Next() = 0;
+
+    // Returns the current material being iterated over.
+    virtual mat::Material* Material() = 0;
+};
+
+// An iterator over a collection of meshes, per-material.
+class MaterialIterator {
+  public:
+    // Returns the next MaterialIterator and advances the iterator, or returns
+    // nullptr if we're out of elements.
+    virtual MaterialMeshIterator* NextMaterial() = 0;
+};
+
 // Produces a G-buffer containing color, texture, depth, and normal data.
 // Questions:
 // - How to manage multiple materials? They might have additional per-vertex
@@ -35,27 +54,8 @@ class GeometryStage {
   // Clears the G-buffer, overwriting all attachments with zeroes.
   void Clear();
 
-  // A per-material iterator over meshes to avoid excessive shader swaps.
-  class MaterialIterator {
-   public:
-    // Returns the next mesh with the current material.
-    // Returns nullptr if we've iterated over all meshes.
-    virtual const geo::Mesh* Next() = 0;
-
-    // Returns the current material being iterated over.
-    virtual mat::Material* Material() = 0;
-  };
-
-  // An iterator over a collection of meshes, per-material.
-  class MeshIterator {
-   public:
-    // Returns the next MaterialIterator and advances the iterator, or returns
-    // nullptr if we're out of elements.
-    virtual MaterialIterator* Next() = 0;
-  };
-
   // Iterates over the given mesh iterator, drawing each one per-material.
-  void Render(const game::Camera& camera, MeshIterator& iter);
+  void Render(const game::Camera& camera, MaterialIterator& iter);
 
  protected:
   GLuint color_tex() const { return color_tex_; }

@@ -1,8 +1,12 @@
 #ifndef QUARKE_SRC_GAME_SCENE_H_
 #define QUARKE_SRC_GAME_SCENE_H_
 
+#include <map>
 #include <memory>
+#include <list>
 #include "game/camera.h"
+#include "geo/mesh.h"
+#include "mat/solid_material.h"
 #include "pipe/geometry_stage.h"
 
 namespace quarke {
@@ -23,8 +27,46 @@ class Scene {
  private:
   Camera camera_;
 
-  // TODO: should we put the pipeline here?
+  // TODO: should we put thepipeline here?
   std::unique_ptr<pipe::GeometryStage> geom_;
+
+  typedef std::list<std::unique_ptr<geo::Mesh>> MeshPtrVector;
+
+  MeshPtrVector meshes_;
+
+  // TODO: A temporary material iterator until we have different material types implemented.
+  class StubMaterialIterator : public pipe::MaterialIterator,
+                               public pipe::MaterialMeshIterator {
+   public:
+    StubMaterialIterator(mat::Material* material, MeshPtrVector& meshes) :
+      material_(material), meshes_(meshes), iterated_(false) {
+      mesh_iter_ = meshes.cbegin();
+    }
+
+    pipe::MaterialMeshIterator* NextMaterial() override {
+      if (iterated_)
+        return nullptr;
+
+      iterated_ = true;
+      return this;
+    }
+
+    const geo::Mesh* Next() override {
+      if (mesh_iter_ == meshes_.end())
+        return nullptr;
+      return mesh_iter_->get();
+    }
+
+    mat::Material* Material() override {
+      return material_;
+    }
+
+   private:
+    mat::Material* const material_;
+    const MeshPtrVector& meshes_;
+    MeshPtrVector::const_iterator mesh_iter_;
+    bool iterated_;
+  };
 };
 
 }  // namespace game

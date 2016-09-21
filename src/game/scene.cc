@@ -1,4 +1,5 @@
 #include "game/scene.h"
+#include "mat/solid_material.h"
 
 namespace quarke {
 namespace game {
@@ -13,7 +14,11 @@ void Scene::Render() {
     //       in addition, make the mesh interface somewhat exposed.
     geom_ = std::make_unique<pipe::GeometryStage>();
   }
-  // geom_->Render(camera_, TODO);
+
+  // FIXME: render with basic material for now.
+  mat::SolidMaterial basicMaterial(glm::vec4(1.0, 1.0, 1.0, 1.0));
+  StubMaterialIterator iter(&basicMaterial, meshes_);
+  geom_->Render(camera_, iter);
 }
 
 void Scene::OnResize(int width, int height) {

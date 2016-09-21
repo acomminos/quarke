@@ -8,14 +8,15 @@ Scene::Scene(int width, int height)
   : camera_(width, height)
   , rot(0) {
   // XXX: testing
-  meshes_.push_back(geo::Mesh::FromOBJ("model/teapot.obj"));
+  //meshes_.push_back(geo::Mesh::FromOBJ("model/teapot.obj"));
+  meshes_.push_back(geo::Mesh::FromOBJ("model/armadillo.obj"));
 }
 
 void Scene::Update(float dt) {
   // XXX: demo
   const float rot_speed = 1.5; // rotational speed in radians
-  const float rot_dist = 500.0;
-  const float rot_y = 250.0;
+  const float rot_dist = 10.0;
+  const float rot_y = 5.0;
   rot = rot + (dt * rot_speed);
   float x = rot_dist * cos(rot);
   float z = rot_dist * sin(rot);
@@ -41,7 +42,7 @@ void Scene::Render() {
   // FIXME: this blit is the worst
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
   glBindFramebuffer(GL_READ_FRAMEBUFFER, geom_->fbo());
-  glReadBuffer(GL_COLOR_ATTACHMENT1);
+  glReadBuffer(GL_COLOR_ATTACHMENT0);
   glBlitFramebuffer(0, 0, camera_.viewport_width(), camera_.viewport_height(),
                     0, 0, camera_.viewport_width(), camera_.viewport_height(),
                     GL_COLOR_BUFFER_BIT, GL_NEAREST);

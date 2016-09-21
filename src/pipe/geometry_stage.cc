@@ -154,34 +154,39 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter) {
         case geo::VertexFormat::P3N3T2:
           glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
           glEnableVertexAttribArray(VS_IN_NORMAL_LOCATION);
-          glEnableVertexAttribArray(VS_IN_TEXCOORD_LOCATION);
 
           glBindBuffer(GL_ARRAY_BUFFER, vb.buffer());
-          glVertexAttribPointer(VS_IN_POSITION_LOCATION, sizeof(GLfloat) * 3,
+          glVertexAttribPointer(VS_IN_POSITION_LOCATION, 3,
                                 GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3 + 2),
                                 (void*)0);
-          glVertexAttribPointer(VS_IN_NORMAL_LOCATION, sizeof(GLfloat) * 3,
+          glVertexAttribPointer(VS_IN_NORMAL_LOCATION, 3,
                                 GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3 + 2),
                                 (void*)(sizeof(GLfloat) * 3));
-          glVertexAttribPointer(VS_IN_TEXCOORD_LOCATION, sizeof(GLfloat) * 2,
-                                GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3 + 2),
-                                (void*)(sizeof(GLfloat) * (3 + 3)));
+
+          if (mat->use_texture()) {
+            glEnableVertexAttribArray(VS_IN_TEXCOORD_LOCATION);
+            glVertexAttribPointer(VS_IN_TEXCOORD_LOCATION, 2,
+                                  GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3 + 2),
+                                  (void*)(sizeof(GLfloat) * (3 + 3)));
+          }
           break;
         case geo::VertexFormat::P3N3:
           glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
           glEnableVertexAttribArray(VS_IN_NORMAL_LOCATION);
 
           glBindBuffer(GL_ARRAY_BUFFER, vb.buffer());
-          glVertexAttribPointer(VS_IN_POSITION_LOCATION, sizeof(GLfloat) * 3,
+          glVertexAttribPointer(VS_IN_POSITION_LOCATION, 3,
                                 GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3),
                                 (void*)0);
-          glVertexAttribPointer(VS_IN_NORMAL_LOCATION, sizeof(GLfloat) * 3,
+          glVertexAttribPointer(VS_IN_NORMAL_LOCATION, 3,
                                 GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3),
                                 (void*)(sizeof(GLfloat) * 3));
           break;
         case geo::VertexFormat::P3T2:
           glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
-          glEnableVertexAttribArray(VS_IN_TEXCOORD_LOCATION);
+          if (mat->use_texture()) {
+            glEnableVertexAttribArray(VS_IN_TEXCOORD_LOCATION);
+          }
           assert(false); // TODO
           break;
       }
@@ -208,8 +213,11 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
      << "in vec4 position;" << std::endl;
   vs << "layout(location = " << VS_IN_NORMAL_LOCATION << ") "
      << "in vec4 normal;" << std::endl;
-  vs << "layout(location = " << VS_IN_TEXCOORD_LOCATION << ") "
-     << "in vec2 texcoord;" << std::endl;
+
+  if (material.use_texture()) {
+    vs << "layout(location = " << VS_IN_TEXCOORD_LOCATION << ") "
+       << "in vec2 texcoord;" << std::endl;
+  }
 
   // XXX: do we even want to deal with color vs. texturing here?
   //      we could probably delegate this to material implementations.
@@ -217,7 +225,10 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
   //      ( ͡° ͜ʖ ͡°)
   vs << "out vec4 vColor;" << std::endl;
   vs << "out vec4 vNormal;" << std::endl;
-  vs << "out vec2 vTexcoord;" << std::endl;
+
+  if (material.use_texture()) {
+    vs << "out vec2 vTexcoord;" << std::endl;
+  }
 
   // XXX: default placeholder material
   // TODO: source from material here
@@ -227,9 +238,13 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
      // XXX: hwhite test
      << "vColor = vec4(1.0, 1.0, 1.0, 1.0);" << std::endl
      // TODO: supply normal matrix
-     << "vNormal = normalize(normal);" << std::endl
-     << "vTexcoord = texcoord;" << std::endl
-     << "gl_Position = " << UNIFORM_MVP_MATRIX_NAME << " * position;" << std::endl
+     << "vNormal = normalize(normal);" << std::endl;
+
+  if (material.use_texture()) {
+     vs << "vTexcoord = texcoord;" << std::endl;
+  }
+
+  vs << "gl_Position = " << UNIFORM_MVP_MATRIX_NAME << " * position;" << std::endl
      << "}";
 
 #ifdef QUARKE_DEBUG
@@ -256,7 +271,10 @@ GLuint GeometryStage::BuildFragmentShader(const mat::Material& material) const {
 
   fs << "in vec4 vColor;" << std::endl;
   fs << "in vec4 vNormal;" << std::endl;
-  fs << "in vec4 vTexcoord;" << std::endl;
+
+  if (material.use_texture()) {
+    fs << "in vec4 vTexcoord;" << std::endl;
+  }
 
   fs << "layout(location = " << FS_OUT_COLOR_BUFFER << ") "
      << "out vec4 outColor;" << std::endl;

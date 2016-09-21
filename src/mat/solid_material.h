@@ -15,6 +15,7 @@ class SolidMaterial : public Material {
   void BuildFragmentShader(std::ostream& fs) override;
   void OnBindProgram(GLuint program) override;
   void OnUnbindProgram(GLuint program) override;
+  bool use_texture() const override { return false; }
  private:
   const glm::vec4 color_;
 };

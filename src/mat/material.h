@@ -29,6 +29,9 @@ class Material {
   // TODO: link in the geometry stage here to reduce coupling.
   virtual void BuildFragmentShader(std::ostream& fs) = 0;
 
+  // Returns true if texture coordinates are used/required.
+  virtual bool use_texture() const = 0;
+
   // Binds any custom inputs built by the material.
   virtual void OnBindProgram(GLuint program) {}
   // Unbinds any custom inputs built by the material.

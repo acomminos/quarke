@@ -42,10 +42,22 @@ void Scene::Render() {
   // FIXME: this blit is the worst
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
   glBindFramebuffer(GL_READ_FRAMEBUFFER, geom_->fbo());
-  glReadBuffer(GL_COLOR_ATTACHMENT1);
-  glBlitFramebuffer(0, 0, camera_.viewport_width(), camera_.viewport_height(),
-                    0, 0, camera_.viewport_width(), camera_.viewport_height(),
+
+  int width = camera_.viewport_width();
+  int height = camera_.viewport_height();
+  // Draw color buffer in bottom left
+  glReadBuffer(GL_COLOR_ATTACHMENT0);
+  glBlitFramebuffer(0, 0, width, height,
+                    0, 0, width/2, height/2,
                     GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+  // Draw normal buffer in bottom right
+  glReadBuffer(GL_COLOR_ATTACHMENT1);
+  glBlitFramebuffer(0, 0, width, height,
+                    width/2, 0, width, height/2,
+                    GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+  // TODO: draw light buffer in top right, draw blended buffer in top left
 }
 
 void Scene::OnResize(int width, int height) {

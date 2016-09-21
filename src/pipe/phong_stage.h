@@ -6,6 +6,11 @@
 #include <memory>
 
 namespace quarke {
+
+namespace game {
+class Camera;
+}  // namespace game
+
 namespace pipe {
 
 struct PointLight {
@@ -28,7 +33,7 @@ class PhongStage {
   void Clear();
 
   // Accumulates the given point light's luminosity to the light buffer.
-  void Illuminate(const PointLight& light);
+  void Illuminate(const game::Camera& camera, const PointLight& light);
 
   // Resizes the light buffer to the given dimensions.
   // Implicitly clears the light buffer.

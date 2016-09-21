@@ -22,21 +22,29 @@ class PhongStage {
 
   // Instantiates a phong stage drawing to a light buffer.
   PhongStage(GLuint light_fbo, GLuint light_buffer, GLuint light_tex,
-             GLuint color_tex, GLuint normal_tex, GLuint depth_tex);
+             GLuint screen_vbo, GLuint color_tex, GLuint normal_tex,
+             GLuint depth_tex);
 
   void Clear();
 
   // Accumulates the given point light's luminosity to the light buffer.
   void Illuminate(const PointLight& light);
 
+  // Resizes the light buffer to the given dimensions.
+  // Implicitly clears the light buffer.
+  void Resize(int width, int height);
+
   GLuint light_fbo() const { return light_fbo_; }
   GLuint light_buffer() const { return light_buffer_; }
   GLuint light_tex() const { return light_tex_; }
 
  private:
+  void BuildShaderProgram();
+
   GLuint light_fbo_;
   GLuint light_buffer_;
   GLuint light_tex_;
+  GLuint screen_vbo_;
 
   GLuint color_tex_;
   GLuint normal_tex_;

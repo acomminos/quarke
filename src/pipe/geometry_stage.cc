@@ -95,6 +95,7 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter) {
     SetOutputSize(camera.viewport_width(), camera.viewport_height());
   }
 
+  glEnable(GL_DEPTH_TEST);
   // scoped framebuffer setting? that's an extra GL call, homie.
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_);
   // note:
@@ -297,7 +298,7 @@ GLuint GeometryStage::BuildFragmentShader(const mat::Material& material) const {
   // call upon dat material to make frags
   fs << "void main(void) {" << std::endl
      << "outColor = vColor;" << std::endl
-     << "outNormal = normalize(vNormal);" << std::endl
+     << "outNormal = normalize(vec4(vNormal.xyz, 0.0));" << std::endl
      << "}";
 
 #ifdef QUARKE_DEBUG

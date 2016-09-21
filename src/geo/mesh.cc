@@ -66,18 +66,20 @@ std::unique_ptr<Mesh> Mesh::FromOBJ(const std::string& path) {
   assert(attrib.normals.size() % num_normal_components == 0);
   assert(attrib.texcoords.size() % num_uv_components == 0);
 
+  int num_vertices = 0;
   // TODO: Perhaps construct a element buffers ourselves later.
   //       We don't have to worry about quads.
   for (tinyobj::shape_t& shape : shapes) {
+    num_vertices += shape.mesh.indices.size();
     for (tinyobj::index_t& i : shape.mesh.indices) {
       // TODO: handle per-face textures (supported by obj)
       for (int c = 0; c < num_position_components; c++) {
-        data.push_back(attrib.vertices[i.vertex_index + c]);
+        data.push_back(attrib.vertices[i.vertex_index * num_position_components + c]);
       }
 
       if (hasNormals) {
         for (int c = 0; c < num_normal_components; c++) {
-          data.push_back(attrib.normals[i.normal_index + c]);
+          data.push_back(attrib.normals[i.normal_index * num_normal_components + c]);
         }
       } else {
         // TODO: calculate face normal here, index modulo 3?
@@ -85,7 +87,7 @@ std::unique_ptr<Mesh> Mesh::FromOBJ(const std::string& path) {
 
       if (hasTexCoords) {
         for (int c = 0; c < num_uv_components; c++) {
-          data.push_back(attrib.texcoords[i.texcoord_index + c]);
+          data.push_back(attrib.texcoords[num_uv_components * i.texcoord_index + c]);
         }
       }
     }
@@ -97,7 +99,7 @@ std::unique_ptr<Mesh> Mesh::FromOBJ(const std::string& path) {
   glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat),
                (const void*) data.data(), GL_STATIC_DRAW);
 
-  return std::make_unique<Mesh>(vb, attrib.vertices.size());
+  return std::make_unique<Mesh>(vb, num_vertices);
 }
 
 Mesh::Mesh(std::shared_ptr<VertexBuffer> array_buffer, GLuint num_vertices)

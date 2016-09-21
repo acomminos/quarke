@@ -215,9 +215,9 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
   vs << "uniform mat4 " << UNIFORM_MVP_MATRIX_NAME << ";" << std::endl;
 
   vs << "layout(location = " << VS_IN_POSITION_LOCATION << ") "
-     << "in vec4 position;" << std::endl;
+     << "in vec3 position;" << std::endl;
   vs << "layout(location = " << VS_IN_NORMAL_LOCATION << ") "
-     << "in vec4 normal;" << std::endl;
+     << "in vec3 normal;" << std::endl;
 
   if (material.use_texture()) {
     vs << "layout(location = " << VS_IN_TEXCOORD_LOCATION << ") "
@@ -243,13 +243,13 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
      // XXX: hwhite test
      << "vColor = vec4(1.0, 1.0, 1.0, 1.0);" << std::endl
      // TODO: supply normal matrix
-     << "vNormal = normalize(normal);" << std::endl;
+     << "vNormal = normalize(vec4(normal, 0.0));" << std::endl;
 
   if (material.use_texture()) {
      vs << "vTexcoord = texcoord;" << std::endl;
   }
 
-  vs << "gl_Position = " << UNIFORM_MVP_MATRIX_NAME << " * position;" << std::endl
+  vs << "gl_Position = " << UNIFORM_MVP_MATRIX_NAME << " * vec4(position, 1.0);" << std::endl
      << "}";
 
 #ifdef QUARKE_DEBUG

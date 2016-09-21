@@ -15,7 +15,7 @@ void Scene::Update(float dt) {
   // XXX: demo
   const float rot_speed = 1.5; // rotational speed in radians
   const float rot_dist = 500.0;
-  const float rot_y = 50.0;
+  const float rot_y = 250.0;
   rot = rot + (dt * rot_speed);
   float x = rot_dist * cos(rot);
   float z = rot_dist * sin(rot);

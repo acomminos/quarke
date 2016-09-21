@@ -4,6 +4,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <map>
+#include <memory>
 
 namespace quarke {
 
@@ -51,6 +52,10 @@ class MaterialIterator {
 //   we should allow for custom vertex attribute binding.
 class GeometryStage {
  public:
+  static std::unique_ptr<GeometryStage> Create(int width, int height);
+
+  GeometryStage(int width, int height, GLuint fbo, GLuint color_tex, GLuint normal_tex, GLuint depth_tex);
+
   // Clears the G-buffer, overwriting all attachments with zeroes.
   void Clear();
 
@@ -59,13 +64,13 @@ class GeometryStage {
 
  protected:
   GLuint color_tex() const { return color_tex_; }
-  GLenum color_format() const { return GL_RGBA; }
+  static GLenum color_format() { return GL_RGBA; }
 
   GLuint normal_tex() const { return normal_tex_; }
-  GLenum normal_format() const { return GL_RGBA; }
+  static GLenum normal_format() { return GL_RGBA; }
 
   GLuint depth_tex() const { return depth_tex_; }
-  GLuint depth_format() const { return GL_DEPTH_COMPONENT; }
+  static GLuint depth_format() { return GL_DEPTH_COMPONENT; }
 
  private:
   void SetOutputSize(int width, int height);

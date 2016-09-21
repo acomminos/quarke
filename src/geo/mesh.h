@@ -62,7 +62,7 @@ class Mesh {
   // Loads a mesh given a path to an obj file.
   // TODO: support mtl. should this output a single, or multiple meshes?
   // Returns nullptr on failure.
-  std::unique_ptr<Mesh> FromOBJ(const std::string& path);
+  static std::unique_ptr<Mesh> FromOBJ(const std::string& path);
 
   // Creates a new mesh using the default material and vertex data.
   Mesh(std::shared_ptr<VertexBuffer> array_buffer, GLuint num_vertices);

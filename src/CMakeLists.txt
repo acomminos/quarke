@@ -5,7 +5,6 @@ set(GLAD_INCLUDE_DIR glad/include)
 
 set(QUARKE_SOURCES
     main.cc
-#   pipe/stage.cc
     pipe/geometry_stage.cc
     mat/solid_material.cc
     geo/mesh.cc

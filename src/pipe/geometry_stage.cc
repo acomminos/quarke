@@ -19,6 +19,49 @@ static const GLuint VS_IN_TEXCOORD_LOCATION = 2;
 static const GLuint FS_OUT_COLOR_BUFFER = 0;
 static const GLuint FS_OUT_NORMAL_BUFFER = 1;
 
+std::unique_ptr<GeometryStage> GeometryStage::Create(int width, int height) {
+  GLuint fbo;
+  glGenFramebuffers(1, &fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+  GLuint color_tex;
+  glGenTextures(1, &color_tex);
+  glBindTexture(GL_TEXTURE_RECTANGLE, color_tex);
+  glTexImage2D(GL_TEXTURE_RECTANGLE, 0, color_format(), width, height, 0,
+               GL_RGBA, GL_FLOAT, nullptr);
+  glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, color_tex, 0);
+
+  GLuint normal_tex;
+  glGenTextures(1, &normal_tex);
+  glBindTexture(GL_TEXTURE_RECTANGLE, normal_tex);
+  glTexImage2D(GL_TEXTURE_RECTANGLE, 0, normal_format(), width, height, 0,
+               GL_RGBA, GL_FLOAT, nullptr);
+  glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, normal_tex, 0);
+
+  GLuint depth_tex;
+  glGenTextures(1, &depth_tex);
+  glBindTexture(GL_TEXTURE_RECTANGLE, depth_tex);
+  glTexImage2D(GL_TEXTURE_RECTANGLE, 0, depth_format(), width, height, 0,
+               GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+  glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth_tex, 0);
+
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    std::cerr << "[gs] Incomplete framebuffer." << std::endl;
+    glDeleteFramebuffers(1, &fbo);
+    glDeleteTextures(1, &color_tex);
+    glDeleteTextures(1, &normal_tex);
+    glDeleteTextures(1, &depth_tex);
+    return nullptr;
+  }
+
+  return std::make_unique<GeometryStage>(width, height, fbo, color_tex, normal_tex, depth_tex);
+}
+
+GeometryStage::GeometryStage(int width, int height, GLuint fbo,
+                             GLuint color_tex, GLuint normal_tex, GLuint depth_tex)
+  : out_width_(width), out_height_(height), fbo_(fbo), color_tex_(color_tex)
+  , normal_tex_(normal_tex), depth_tex_(depth_tex) {}
+
 void GeometryStage::Clear() {
   // TODO: scoped framebuffer state
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_);
@@ -127,7 +170,14 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter) {
         case geo::VertexFormat::P3N3:
           glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
           glEnableVertexAttribArray(VS_IN_NORMAL_LOCATION);
-          assert(false); // TODO
+
+          glBindBuffer(GL_ARRAY_BUFFER, vb.buffer());
+          glVertexAttribPointer(VS_IN_POSITION_LOCATION, sizeof(GLfloat) * 3,
+                                GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3),
+                                (void*)0);
+          glVertexAttribPointer(VS_IN_NORMAL_LOCATION, sizeof(GLfloat) * 3,
+                                GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3),
+                                (void*)(sizeof(GLfloat) * 3));
           break;
         case geo::VertexFormat::P3T2:
           glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
@@ -150,7 +200,7 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
   // XXX: currently, materials are unused.
   //      should populate vertex/uniform info from them.
   std::ostringstream vs;
-  vs << "#version 150" << std::endl;
+  vs << "#version 330" << std::endl;
 
   vs << "uniform mat4 " << UNIFORM_MVP_MATRIX_NAME << ";" << std::endl;
 
@@ -176,7 +226,8 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
   vs << "void main(void) {" << std::endl
      // XXX: hwhite test
      << "vColor = vec4(1.0, 1.0, 1.0, 1.0);" << std::endl
-     << "vNormal = normal;" << std::endl
+     // TODO: supply normal matrix
+     << "vNormal = normalize(normal);" << std::endl
      << "vTexcoord = texcoord;" << std::endl
      << "gl_Position = " << UNIFORM_MVP_MATRIX_NAME << " * position;" << std::endl
      << "}";
@@ -198,7 +249,7 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
 
 GLuint GeometryStage::BuildFragmentShader(const mat::Material& material) const {
   std::ostringstream fs;
-  fs << "#version 150" << std::endl;
+  fs << "#version 330" << std::endl;
 
   fs << "uniform mat4 " << UNIFORM_MVP_MATRIX_NAME << ";" << std::endl;
   fs << "uniform sampler2D " << UNIFORM_SAMPLER_MATRIX_NAME << ";" << std::endl;
@@ -216,7 +267,7 @@ GLuint GeometryStage::BuildFragmentShader(const mat::Material& material) const {
   // call upon dat material to make frags
   fs << "void main(void) {" << std::endl
      << "outColor = vColor;" << std::endl
-     << "outNormal = vNormal;" << std::endl
+     << "outNormal = normalize(vNormal);" << std::endl
      << "}";
 
 #ifdef QUARKE_DEBUG

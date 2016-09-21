@@ -15,6 +15,11 @@ int Game::Run(int* argc, char** argv[]) {
   if (!glfwInit())
     return -1;
 
+#ifdef QUARKE_DEBUG
+  // FIXME: possibly disable this, even in debug builds. maybe flag?
+  glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+#endif // QUARKE_DEBUG
+
   // TODO: fetch window size from args?
   GLFWwindow* window = glfwCreateWindow(640, 480, "quarke", nullptr, nullptr);
   if (!window) {

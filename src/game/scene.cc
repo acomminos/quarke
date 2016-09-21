@@ -6,13 +6,17 @@ namespace game {
 
 Scene::Scene(int width, int height)
   : camera_(width, height) {
+  // XXX: testing
+  meshes_.push_back(geo::Mesh::FromOBJ("../model/teapot.obj"));
 }
 
 void Scene::Render() {
   if (!geom_) {
     // TODO: instantiate this elsewhere where we can handle failures.
     //       in addition, make the mesh interface somewhat exposed.
-    geom_ = std::make_unique<pipe::GeometryStage>();
+    geom_ = pipe::GeometryStage::Create(camera_.viewport_width(),
+                                        camera_.viewport_height());
+    assert(geom_);
   }
 
   // FIXME: render with basic material for now.

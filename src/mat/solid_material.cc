@@ -7,14 +7,14 @@ namespace mat {
 
 SolidMaterial::SolidMaterial(glm::vec4 color) : color_(color) { }
 
-void SolidMaterial::BuildVertexShader(std::ostream& vs) {
+void SolidMaterial::BuildVertexShader(std::ostream& vs) const {
   vs << "uniform vec4 solidColor;" << std::endl;
   vs << "void main() {";
   vs << "outColor = solidColor;";
   vs << "}";
 }
 
-void SolidMaterial::BuildFragmentShader(std::ostream& fs) {
+void SolidMaterial::BuildFragmentShader(std::ostream& fs) const {
 }
 
 void SolidMaterial::OnBindProgram(GLuint program) {

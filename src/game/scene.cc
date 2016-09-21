@@ -5,9 +5,22 @@ namespace quarke {
 namespace game {
 
 Scene::Scene(int width, int height)
-  : camera_(width, height) {
+  : camera_(width, height)
+  , rot(0) {
   // XXX: testing
   meshes_.push_back(geo::Mesh::FromOBJ("../model/teapot.obj"));
+}
+
+void Scene::Update(float dt) {
+  // XXX: demo
+  const float rot_speed = 1.5; // rotational speed in radians
+  const float rot_dist = 500.0;
+  const float rot_y = 50.0;
+  rot = rot + (dt * rot_speed);
+  float x = rot_dist * cos(rot);
+  float z = rot_dist * sin(rot);
+
+  camera_.LookAt({ x, rot_y, z }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 });
 }
 
 void Scene::Render() {
@@ -19,10 +32,19 @@ void Scene::Render() {
     assert(geom_);
   }
 
+  geom_->Clear();
   // FIXME: render with basic material for now.
-  mat::SolidMaterial basicMaterial(glm::vec4(1.0, 1.0, 1.0, 1.0));
+  mat::SolidMaterial basicMaterial(glm::vec4(1.0, 0.0, 0.0, 1.0));
   StubMaterialIterator iter(&basicMaterial, meshes_);
   geom_->Render(camera_, iter);
+
+  // FIXME: this blit is the worst
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, geom_->fbo());
+  glReadBuffer(GL_COLOR_ATTACHMENT0);
+  glBlitFramebuffer(0, 0, camera_.viewport_width(), camera_.viewport_height(),
+                    0, 0, camera_.viewport_width(), camera_.viewport_height(),
+                    GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
 
 void Scene::OnResize(int width, int height) {

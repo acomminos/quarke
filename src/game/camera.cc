@@ -14,8 +14,8 @@ Camera::Camera(int viewport_width, int viewport_height, float fov,
   InvalidateProjection();
 }
 
-void Camera::LookAt(const glm::vec3& position, const glm::vec3& target,
-                    const glm::vec3& up) {
+void Camera::LookAt(const glm::vec3 position, const glm::vec3 target,
+                    const glm::vec3 up) {
   view_ = glm::lookAt(position, target, up);
 }
 

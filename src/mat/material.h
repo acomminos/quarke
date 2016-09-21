@@ -22,12 +22,12 @@ class Material {
   // The material is expected to provide the "main" function for the shader, as
   // well as populate all outputs of the geometry stage pipeline.
   // TODO: link in the geometry stage here to reduce coupling.
-  virtual void BuildVertexShader(std::ostream& vs) = 0;
+  virtual void BuildVertexShader(std::ostream& vs) const = 0;
   // Generates a material-specific fragment shader.
   // The material is expected to provide the "main" function for the shader, as
   // well as populate all outputs of the geometry stage pipeline.
   // TODO: link in the geometry stage here to reduce coupling.
-  virtual void BuildFragmentShader(std::ostream& fs) = 0;
+  virtual void BuildFragmentShader(std::ostream& fs) const = 0;
 
   // Returns true if texture coordinates are used/required.
   virtual bool use_texture() const = 0;

@@ -15,14 +15,14 @@ class Camera {
 
   // Sets the camera's view matrix using a given eye location, target location,
   // and an up vector.
-  void LookAt(const glm::vec3& position, const glm::vec3& target,
-              const glm::vec3& up);
+  void LookAt(const glm::vec3 position, const glm::vec3 target,
+              const glm::vec3 up);
 
   // Applies a translation to the view matrix in the basis formed by the matrix.
-  void PostTranslate(const glm::vec3& translation);
+  void PostTranslate(const glm::vec3 translation);
 
   // Applies a translation in the standard basis prior to any transforms.
-  void PreTranslate(const glm::vec3& translation);
+  void PreTranslate(const glm::vec3 translation);
 
   void SetViewport(int width, int height);
 

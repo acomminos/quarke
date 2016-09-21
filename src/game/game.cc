@@ -8,6 +8,8 @@ namespace quarke {
 namespace game {
 
 static Game* current_game;
+// Maximum time step is 100ms.
+static const float MAX_TIME_STEP = 0.1;
 
 /* static */
 int Game::Run(int* argc, char** argv[]) {
@@ -48,12 +50,19 @@ void Game::Loop() {
   Scene scene(width, height); // XXX: TEMP
 
   glfwSetFramebufferSizeCallback(window_, [](GLFWwindow*, int width, int height) {
+      glViewport(0, 0, width, height);
   });
 
+  float dt = 1.f/60.f;
   while (!glfwWindowShouldClose(window_)) {
+    float start = glfwGetTime();
+
+    scene.Update(dt);
     scene.Render();
     glfwSwapBuffers(window_);
     glfwPollEvents();
+
+    dt = fmin(glfwGetTime() - start, MAX_TIME_STEP);
   }
 }
 

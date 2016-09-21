@@ -11,8 +11,8 @@ namespace mat {
 class SolidMaterial : public Material {
  public:
   SolidMaterial(glm::vec4 color);
-  void BuildVertexShader(std::ostream& vs) override;
-  void BuildFragmentShader(std::ostream& fs) override;
+  void BuildVertexShader(std::ostream& vs) const override;
+  void BuildFragmentShader(std::ostream& fs) const override;
   void OnBindProgram(GLuint program) override;
   void OnUnbindProgram(GLuint program) override;
   bool use_texture() const override { return false; }

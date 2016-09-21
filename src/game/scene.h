@@ -18,6 +18,7 @@ class Scene {
  public:
   Scene(int width, int height);
 
+  void Update(float dt);
   void Render();
 
   // Called when the engine has resized the scene.
@@ -26,6 +27,7 @@ class Scene {
 
  private:
   Camera camera_;
+  float rot; // tmp
 
   // TODO: should we put thepipeline here?
   std::unique_ptr<pipe::GeometryStage> geom_;
@@ -54,7 +56,7 @@ class Scene {
     const geo::Mesh* Next() override {
       if (mesh_iter_ == meshes_.end())
         return nullptr;
-      return mesh_iter_->get();
+      return (mesh_iter_++)->get();
     }
 
     mat::Material* Material() override {

@@ -8,6 +8,8 @@ namespace quarke {
 namespace game {
 
 static Game* current_game;
+static Scene* todo_remove_scene; // TODO: the name says it all
+
 // Maximum time step is 100ms.
 static const float MAX_TIME_STEP = 0.1;
 
@@ -52,9 +54,11 @@ void Game::Loop() {
   int width, height;
   glfwGetFramebufferSize(window_, &width, &height);
   Scene scene(width, height); // XXX: TEMP
+  todo_remove_scene = &scene;
 
   glfwSetFramebufferSizeCallback(window_, [](GLFWwindow*, int width, int height) {
       glViewport(0, 0, width, height);
+      todo_remove_scene->OnResize(width, height);
   });
 
   float dt = 1.f/60.f;
@@ -68,6 +72,8 @@ void Game::Loop() {
 
     dt = fmin(glfwGetTime() - start, MAX_TIME_STEP);
   }
+
+  todo_remove_scene = nullptr;
 }
 
 

@@ -10,6 +10,7 @@ namespace quarke {
 namespace pipe {
 
 static const char* UNIFORM_MVP_MATRIX_NAME = "mvp_matrix";
+static const char* UNIFORM_NORMAL_MATRIX_NAME = "normal_matrix";
 static const char* UNIFORM_SAMPLER_MATRIX_NAME = "sampler";
 
 static const GLuint VS_IN_POSITION_LOCATION = 0;
@@ -65,6 +66,7 @@ GeometryStage::GeometryStage(int width, int height, GLuint fbo,
 void GeometryStage::Clear() {
   // TODO: scoped framebuffer state
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_);
+  glDrawBuffers(2, (const GLenum[]) { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 });
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
@@ -104,7 +106,8 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter) {
   // we define their locations internal to this class.
   glDrawBuffers(2, (const GLenum[]) { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 });
 
-  glm::mat4 vp_matrix = camera.Compute();
+  glm::mat4 vp_matrix = camera.ComputeProjection();
+  glm::mat4 view_matrix = camera.ComputeView();
 
   MaterialMeshIterator* mit = nullptr;
   while ((mit = iter.NextMaterial()) != nullptr) {
@@ -134,6 +137,7 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter) {
     mat->OnBindProgram(program);
 
     GLuint mvp_location = glGetUniformLocation(program, UNIFORM_MVP_MATRIX_NAME);
+    GLuint normal_matrix_location = glGetUniformLocation(program, UNIFORM_NORMAL_MATRIX_NAME);
 
     const geo::Mesh* mesh = nullptr;
     while ((mesh = mit->Next()) != nullptr) {
@@ -197,6 +201,8 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter) {
 
       glm::mat4 mvp_matrix = vp_matrix * mesh->transform();
       glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
+      glm::mat4 normal_matrix = glm::transpose(glm::inverse(view_matrix * mesh->transform()));
+      glUniformMatrix4fv(normal_matrix_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
 
       glDrawArrays(GL_TRIANGLES, 0, mesh->num_vertices());
       glDeleteVertexArrays(1, &vao); // XXX
@@ -213,6 +219,7 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
   vs << "#version 330" << std::endl;
 
   vs << "uniform mat4 " << UNIFORM_MVP_MATRIX_NAME << ";" << std::endl;
+  vs << "uniform mat4 " << UNIFORM_NORMAL_MATRIX_NAME << ";" << std::endl;
 
   vs << "layout(location = " << VS_IN_POSITION_LOCATION << ") "
      << "in vec3 position;" << std::endl;
@@ -242,8 +249,7 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
   vs << "void main(void) {" << std::endl
      // XXX: hwhite test
      << "vColor = vec4(1.0, 1.0, 1.0, 1.0);" << std::endl
-     // TODO: supply normal matrix
-     << "vNormal = normalize(vec4(normal, 0.0));" << std::endl;
+     << "vNormal = normalize(" << UNIFORM_NORMAL_MATRIX_NAME << " * vec4(normal, 0.0));" << std::endl;
 
   if (material.use_texture()) {
      vs << "vTexcoord = texcoord;" << std::endl;
@@ -272,12 +278,13 @@ GLuint GeometryStage::BuildFragmentShader(const mat::Material& material) const {
   fs << "#version 330" << std::endl;
 
   fs << "uniform mat4 " << UNIFORM_MVP_MATRIX_NAME << ";" << std::endl;
-  fs << "uniform sampler2D " << UNIFORM_SAMPLER_MATRIX_NAME << ";" << std::endl;
+  fs << "uniform mat4 " << UNIFORM_NORMAL_MATRIX_NAME << ";" << std::endl;
 
   fs << "in vec4 vColor;" << std::endl;
   fs << "in vec4 vNormal;" << std::endl;
 
   if (material.use_texture()) {
+    fs << "uniform sampler2D " << UNIFORM_SAMPLER_MATRIX_NAME << ";" << std::endl;
     fs << "in vec4 vTexcoord;" << std::endl;
   }
 

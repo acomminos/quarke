@@ -27,7 +27,9 @@ class Camera {
   void SetViewport(int width, int height);
 
   // Computes a world-to-NDC matrix representing this camera.
-  glm::mat4 Compute() const;
+  glm::mat4 ComputeProjection() const;
+  // Computes a view transformation matrix.
+  glm::mat4 ComputeView() const;
 
   int viewport_width() const { return viewport_width_; }
   int viewport_height() const { return viewport_height_; }

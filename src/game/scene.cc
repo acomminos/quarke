@@ -41,7 +41,7 @@ void Scene::Render() {
   // FIXME: this blit is the worst
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
   glBindFramebuffer(GL_READ_FRAMEBUFFER, geom_->fbo());
-  glReadBuffer(GL_COLOR_ATTACHMENT0);
+  glReadBuffer(GL_COLOR_ATTACHMENT1);
   glBlitFramebuffer(0, 0, camera_.viewport_width(), camera_.viewport_height(),
                     0, 0, camera_.viewport_width(), camera_.viewport_height(),
                     GL_COLOR_BUFFER_BIT, GL_NEAREST);

@@ -54,7 +54,8 @@ class GeometryStage {
  public:
   static std::unique_ptr<GeometryStage> Create(int width, int height);
 
-  GeometryStage(int width, int height, GLuint fbo, GLuint color_tex, GLuint normal_tex, GLuint depth_tex);
+  GeometryStage(int width, int height, GLuint fbo, GLuint color_tex,
+                GLuint normal_tex, GLuint position_tex, GLuint depth_tex);
 
   // Clears the G-buffer, overwriting all attachments with zeroes.
   void Clear();
@@ -69,6 +70,9 @@ class GeometryStage {
 
   GLuint normal_tex() const { return normal_tex_; }
   static GLenum normal_format() { return GL_RGBA; }
+
+  GLuint position_tex() const { return position_tex_; }
+  static GLenum position_format() { return GL_RGBA; }
 
   GLuint depth_tex() const { return depth_tex_; }
   static GLuint depth_format() { return GL_DEPTH_COMPONENT; }
@@ -87,6 +91,7 @@ class GeometryStage {
   GLuint fbo_;
   GLuint color_tex_;
   GLuint normal_tex_;
+  GLuint position_tex_;
   GLuint depth_tex_;
 
   // TODO: don't use raw pointers as identifiers here!

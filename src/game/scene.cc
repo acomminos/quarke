@@ -52,16 +52,23 @@ void Scene::Render() {
 
   int width = camera_.viewport_width();
   int height = camera_.viewport_height();
+
   // Draw color buffer in bottom left
   glReadBuffer(GL_COLOR_ATTACHMENT0);
   glBlitFramebuffer(0, 0, width, height,
-                    0, 0, width/2, height/2,
+                    0, 0, width/3, height/3,
                     GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
-  // Draw normal buffer in bottom right
+  // Draw normal buffer in bottom middle
   glReadBuffer(GL_COLOR_ATTACHMENT1);
   glBlitFramebuffer(0, 0, width, height,
-                    width/2, 0, width, height/2,
+                    width/3, 0, 2 * width / 3, height/3,
+                    GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+  // Draw position buffer in bottom right
+  glReadBuffer(GL_COLOR_ATTACHMENT2);
+  glBlitFramebuffer(0, 0, width, height,
+                    2 * width/3, 0, width, height/3,
                     GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
   // TODO: draw light buffer in top right, draw blended buffer in top left

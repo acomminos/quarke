@@ -19,6 +19,7 @@ static const GLuint VS_IN_TEXCOORD_LOCATION = 2;
 
 static const GLuint FS_OUT_COLOR_BUFFER = 0;
 static const GLuint FS_OUT_NORMAL_BUFFER = 1;
+static const GLuint FS_OUT_POSITION_BUFFER = 2;
 
 std::unique_ptr<GeometryStage> GeometryStage::Create(int width, int height) {
   GLuint fbo;
@@ -39,6 +40,13 @@ std::unique_ptr<GeometryStage> GeometryStage::Create(int width, int height) {
                GL_RGBA, GL_FLOAT, nullptr);
   glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, normal_tex, 0);
 
+  GLuint position_tex;
+  glGenTextures(1, &position_tex);
+  glBindTexture(GL_TEXTURE_RECTANGLE, position_tex);
+  glTexImage2D(GL_TEXTURE_RECTANGLE, 0, position_format(), width, height, 0,
+               GL_RGBA, GL_FLOAT, nullptr);
+  glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, position_tex, 0);
+
   GLuint depth_tex;
   glGenTextures(1, &depth_tex);
   glBindTexture(GL_TEXTURE_RECTANGLE, depth_tex);
@@ -51,22 +59,26 @@ std::unique_ptr<GeometryStage> GeometryStage::Create(int width, int height) {
     glDeleteFramebuffers(1, &fbo);
     glDeleteTextures(1, &color_tex);
     glDeleteTextures(1, &normal_tex);
+    glDeleteTextures(1, &position_tex);
     glDeleteTextures(1, &depth_tex);
     return nullptr;
   }
 
-  return std::make_unique<GeometryStage>(width, height, fbo, color_tex, normal_tex, depth_tex);
+  return std::make_unique<GeometryStage>(width, height, fbo, color_tex,
+                                         normal_tex, position_tex, depth_tex);
 }
 
 GeometryStage::GeometryStage(int width, int height, GLuint fbo,
-                             GLuint color_tex, GLuint normal_tex, GLuint depth_tex)
+                             GLuint color_tex, GLuint normal_tex,
+                             GLuint position_tex, GLuint depth_tex)
   : out_width_(width), out_height_(height), fbo_(fbo), color_tex_(color_tex)
-  , normal_tex_(normal_tex), depth_tex_(depth_tex) {}
+  , position_tex_(position_tex), normal_tex_(normal_tex), depth_tex_(depth_tex)
+{}
 
 void GeometryStage::Clear() {
   // TODO: scoped framebuffer state
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_);
-  glDrawBuffers(2, (const GLenum[]) { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 });
+  glDrawBuffers(3, (const GLenum[]) { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2});
   glClearColor(0.0, 0.0, 0.0, 0.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
@@ -96,7 +108,7 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter) {
   }
 
   glEnable(GL_DEPTH_TEST);
-  // scoped framebuffer setting? that's an extra GL call, homie.
+  // scoped framebuffer setting? that's an extra GL call.
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo_);
   // note:
   // - fragment varying outputs correspond to a color index.
@@ -105,7 +117,7 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter) {
   // - want to use glBindFragDataLocation to map to one of these buffers.
   // having draw buffers bound here is sort of a reasonable assumption, since
   // we define their locations internal to this class.
-  glDrawBuffers(2, (const GLenum[]) { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 });
+  glDrawBuffers(3, (const GLenum[]) { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 });
 
   glm::mat4 vp_matrix = camera.ComputeProjection();
   glm::mat4 view_matrix = camera.ComputeView();
@@ -128,7 +140,6 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter) {
       // TODO: check for errors generated here.
       //       we should also clean up unused material shaders after a few
       //       idle passes. but hey, we have like no materials so life's good.
-      //       vram ain't a thang
     } else {
       program = cache_it->second;
     }
@@ -149,7 +160,7 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter) {
       // - apply per-model transform
       // - do we have any per-model uniforms? if so, major league swagout.
 
-      // oh shit, I guess we could sort of use a pointer to a material as an
+      // I guess we could sort of use a pointer to a material as an
       // identifier (as disappointing as that is)
 
       // TODO: switch to using VAOs. we might be able to make our bindings
@@ -234,10 +245,9 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
 
   // XXX: do we even want to deal with color vs. texturing here?
   //      we could probably delegate this to material implementations.
-  //      let's not get ahead of ourselves though with plumbing.
-  //      ( ͡° ͜ʖ ͡°)
   vs << "out vec4 vColor;" << std::endl;
   vs << "out vec4 vNormal;" << std::endl;
+  vs << "out vec4 vPosition;" << std::endl;
 
   if (material.use_texture()) {
     vs << "out vec2 vTexcoord;" << std::endl;
@@ -250,7 +260,8 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
   vs << "void main(void) {" << std::endl
      // XXX: hwhite test
      << "vColor = vec4(1.0, 1.0, 1.0, 1.0);" << std::endl
-     << "vNormal = normalize(" << UNIFORM_NORMAL_MATRIX_NAME << " * vec4(normal, 0.0));" << std::endl;
+     << "vNormal = normalize(" << UNIFORM_NORMAL_MATRIX_NAME << " * vec4(normal, 0.0));" << std::endl
+     << "vPosition = vec4(position, 1.0);" << std::endl;
 
   if (material.use_texture()) {
      vs << "vTexcoord = texcoord;" << std::endl;
@@ -283,6 +294,7 @@ GLuint GeometryStage::BuildFragmentShader(const mat::Material& material) const {
 
   fs << "in vec4 vColor;" << std::endl;
   fs << "in vec4 vNormal;" << std::endl;
+  fs << "in vec4 vPosition;" << std::endl;
 
   if (material.use_texture()) {
     fs << "uniform sampler2D " << UNIFORM_SAMPLER_MATRIX_NAME << ";" << std::endl;
@@ -293,12 +305,15 @@ GLuint GeometryStage::BuildFragmentShader(const mat::Material& material) const {
      << "out vec4 outColor;" << std::endl;
   fs << "layout(location = " << FS_OUT_NORMAL_BUFFER << ") "
      << "out vec4 outNormal;" << std::endl;
+  fs << "layout(location = " << FS_OUT_POSITION_BUFFER << ") "
+     << "out vec4 outPosition;" << std::endl;
 
   // XXX: default placeholder material (again)
   // call upon dat material to make frags
   fs << "void main(void) {" << std::endl
      << "outColor = vColor;" << std::endl
      << "outNormal = normalize(vec4(vNormal.xyz, 0.0));" << std::endl
+     << "outPosition = vPosition;" << std::endl
      << "}";
 
 #ifdef QUARKE_DEBUG

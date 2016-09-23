@@ -48,6 +48,10 @@ void Scene::Render() {
   StubMaterialIterator iter(&basicMaterial, meshes_);
   geom_->Render(camera_, iter);
 
+  pipe::PointLight light = {1.0f, glm::vec3(0, -100.f, 0), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
+  lighting_->Clear();
+  lighting_->Illuminate(camera_, light);
+
   // FIXME: this blit is the worst
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
   glBindFramebuffer(GL_READ_FRAMEBUFFER, geom_->fbo());
@@ -71,6 +75,13 @@ void Scene::Render() {
   glReadBuffer(GL_COLOR_ATTACHMENT2);
   glBlitFramebuffer(0, 0, width, height,
                     2 * width/3, 0, width, height/3,
+                    GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+  // Draw light buffer in middle right
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, lighting_->fbo());
+  glReadBuffer(lighting_->buffer());
+  glBlitFramebuffer(0, 0, width, height,
+                    2 * width/3, height/3, width, 2 * height/3,
                     GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
   // TODO: draw light buffer in top right, draw blended buffer in top left

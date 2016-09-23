@@ -1,29 +1,28 @@
 #include "pipe/phong_stage.h"
 #include "game/camera.h"
+#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
 namespace quarke {
 namespace pipe {
 
-// a triangle strip covering ndc
+// a triangle fan covering ndc
 static const GLfloat SCREEN_VERTICES[] = {
-  // (x, y, u, v)
-  1.0, 1.0, 1.0, 1.0,
-  -1.0, 1.0, 0.0, 1.0,
-  -1.0, -1.0, 0.0, 0.0,
-  1.0, -1.0, 1.0, 0.0,
+  // (x, y)
+  1.0, 1.0,
+  -1.0, 1.0,
+  -1.0, -1.0,
+  1.0, -1.0,
 };
+
+static const GLuint VS_IN_POSITION_LOCATION = 0;
 
 static const char* PHONG_POINT_VS = R"(
 #version 330
 
-in vec2 position;
-in vec2 uv;
-
-out vec2 vUV;
+layout(location = 0) in vec2 position;
 
 void main(void) {
-  vUV = uv;
   gl_Position = vec4(position, 0.0, 1.0);
 }
 )";
@@ -31,26 +30,29 @@ void main(void) {
 static const char* PHONG_POINT_FS = R"(
 #version 330
 
-uniform sampler2D colorSampler;
-uniform sampler2D normalSampler;
-uniform sampler2D positionSampler;
+uniform sampler2DRect colorSampler;
+uniform sampler2DRect normalSampler;
+uniform sampler2DRect positionSampler;
 
-uniform vec3 eyePosition;
+uniform vec3 eye;
 uniform vec3 lightPosition;
 uniform vec4 lightColor;
-
-in vec2 vUV;
 
 out vec4 outLight;
 
 void main(void) {
-  vec4 albedo = texture(colorSampler, vUV);
-  vec3 normal = texture(normalSampler, vUV).xyz;
-  vec3 pos = texture(positionSampler, vUV).xyz;
+  vec4 albedo = texture(colorSampler, gl_FragCoord.xy);
+  vec3 normal = texture(normalSampler, gl_FragCoord.xy).xyz;
+  vec3 pos = texture(positionSampler, gl_FragCoord.xy).xyz;
 
-  vec3 d = normalize(lightPosition - pos);
+  vec3 d = normalize(pos - lightPosition);
   float dIntensity = dot(d, normal);
-  vec4 diffuseColor = albedo * lightColor * dIntensity;
+  vec4 diffuseColor;
+  if (dIntensity > 0.0) {
+    diffuseColor = albedo * lightColor * dIntensity;
+  } else {
+    diffuseColor = vec4(0.0, 0.0, 0.0, 1.0);
+  }
 
   // TODO: specular component.
 
@@ -72,9 +74,9 @@ std::unique_ptr<PhongStage> PhongStage::Create(int width,
   GLuint light_tex;
   glGenTextures(1, &light_tex);
   glBindTexture(GL_TEXTURE_RECTANGLE, light_tex);
-  glTexImage2D(GL_TEXTURE_RECTANGLE, 0, light_format(), width, height, 0,
+  glTexImage2D(GL_TEXTURE_RECTANGLE, 0, format(), width, height, 0,
                GL_RGBA, GL_FLOAT, nullptr);
-  glFramebufferTexture(GL_FRAMEBUFFER, LIGHT_BUFFER, color_tex, 0);
+  glFramebufferTexture(GL_FRAMEBUFFER, LIGHT_BUFFER, light_tex, 0);
 
   GLuint depth_tex;
   glGenTextures(1, &depth_tex);
@@ -91,30 +93,48 @@ std::unique_ptr<PhongStage> PhongStage::Create(int width,
     return nullptr;
   }
 
+  GLuint program;
+  if (!BuildShaderProgram(program)) {
+    std::cerr << "[phong] Building shader program failed." << std::endl;
+    return nullptr;
+  }
+
   GLuint screen_vbo;
   glGenBuffers(1, &screen_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, screen_vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(SCREEN_VERTICES), SCREEN_VERTICES, GL_STATIC_DRAW);
 
-  GLuint program, vs, fs;
-  if (!BuildShaderProgram(program, vs, fs)) {
-    std::cerr << "[phong] Building shader program failed." << std::endl;
-    return nullptr;
-  }
+  GLuint screen_vao;
+  glGenVertexArrays(1, &screen_vao);
+  glBindVertexArray(screen_vao);
+  glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
+  glVertexAttribPointer(VS_IN_POSITION_LOCATION, 2, GL_FLOAT, GL_FALSE,
+                        sizeof(GLfloat) * 2, nullptr);
+  // TODO: restore current VAO? may be called within context.
 
-  return std::make_unique<PhongStage>(width, height, fbo, LIGHT_BUFFER,
-                                      light_tex, screen_vbo, color_tex,
-                                      normal_tex, position_tex, depth_tex);
+  return std::make_unique<PhongStage>(width, height, program, fbo,
+                                      LIGHT_BUFFER, light_tex, screen_vbo,
+                                      screen_vao, color_tex, normal_tex,
+                                      position_tex, depth_tex);
 }
-
-PhongStage::PhongStage(int width, int height, GLuint light_fbo,
-                       GLuint light_buffer, GLuint light_tex,
-                       GLuint screen_vbo, GLuint color_tex, GLuint normal_tex,
-                       GLuint position_tex, GLuint depth_tex)
-  : out_width_(width), out_height_(height)
+PhongStage::PhongStage(int width, int height, GLuint program,
+                       GLuint light_fbo, GLuint light_buffer,
+                       GLuint light_tex, GLuint screen_vbo, GLuint screen_vao,
+                       GLuint color_tex, GLuint normal_tex, GLuint position_tex,
+                       GLuint depth_tex)
+  : out_width_(width), out_height_(height), program_(program)
   , light_fbo_(light_fbo), light_buffer_(light_buffer), light_tex_(light_tex)
-  , screen_vbo_(screen_vbo), color_tex_(color_tex), normal_tex_(normal_tex)
-  , position_tex_(position_tex), depth_tex_(depth_tex) {}
+  , screen_vbo_(screen_vbo), screen_vao_(screen_vao), color_tex_(color_tex)
+  , normal_tex_(normal_tex), position_tex_(position_tex), depth_tex_(depth_tex)
+{
+  // TODO: construct vs/fs using streams+consts so we don't have to have magic strings
+  color_sampler_location_ = glGetUniformLocation(program, "colorSampler");
+  normal_sampler_location_ = glGetUniformLocation(program, "normalSampler");
+  position_sampler_location_ = glGetUniformLocation(program, "positionSampler");
+  eye_position_location_ = glGetUniformLocation(program, "eye");
+  light_position_location_ = glGetUniformLocation(program, "lightPosition");
+  light_color_location_ = glGetUniformLocation(program, "lightColor");
+}
 
 void PhongStage::Clear() {
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, light_fbo_);
@@ -124,33 +144,71 @@ void PhongStage::Clear() {
 }
 
 void PhongStage::Illuminate(const game::Camera& camera, const PointLight& light) {
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, light_fbo_);
   glDrawBuffers(1, (const GLenum*) &light_buffer_);
-  glBindBuffer(GL_ARRAY_BUFFER, screen_vbo_);
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  glUseProgram(program_);
+
+  glBindVertexArray(screen_vao_);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_RECTANGLE, color_tex_);
+  glUniform1i(color_sampler_location_, 0);
+
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_RECTANGLE, normal_tex_);
+  glUniform1i(normal_sampler_location_, 1);
+
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_RECTANGLE, position_tex_);
+  glUniform1i(position_sampler_location_, 2);
+
+  glUniform3fv(eye_position_location_, 1, glm::value_ptr(camera.Position()));
+  glUniform3fv(light_position_location_, 1, glm::value_ptr(light.position));
+  glUniform4fv(light_color_location_, 1, glm::value_ptr(light.color));
+
+  glDisable(GL_DEPTH_TEST);
+  glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-bool PhongStage::BuildShaderProgram(GLuint& out_program, GLuint& out_vs, GLuint& out_fs) {
+bool PhongStage::BuildShaderProgram(GLuint& out_program) {
   GLuint program = glCreateProgram();
+  GLint compiled;
 
   GLuint vs = glCreateShader(GL_VERTEX_SHADER);
   GLint vs_len = sizeof(PHONG_POINT_VS);
   glShaderSource(vs, 1, &PHONG_POINT_VS, nullptr);
   glCompileShader(vs);
 
+  glGetShaderiv(vs, GL_COMPILE_STATUS, &compiled);
+  if (!compiled) {
+    std::cerr << "[phong] failed to compile vertex shader!" << std::endl;
+    return false;
+  }
+
   GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
   GLint fs_len = sizeof(PHONG_POINT_FS);
   glShaderSource(fs, 1, &PHONG_POINT_FS, nullptr);
   glCompileShader(fs);
 
+  glGetShaderiv(fs, GL_COMPILE_STATUS, &compiled);
+  if (!compiled) {
+    std::cerr << "[phong] failed to compile fragment shader!" << std::endl;
+    return false;
+  }
+
   glAttachShader(program, vs);
   glAttachShader(program, fs);
   glLinkProgram(program);
 
-  // TODO: get errors here
+  // TODO: check link status
+
+  glDetachShader(program, vs);
+  glDetachShader(program, fs);
+  glDeleteShader(vs);
+  glDeleteShader(fs);
 
   out_program = program;
-  out_vs = vs;
-  out_fs = fs;
   return true;
 }
 

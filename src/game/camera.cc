@@ -33,6 +33,10 @@ glm::mat4 Camera::ComputeView() const {
   return view_;
 }
 
+glm::vec3 Camera::Position() const {
+  return glm::vec3(view_[3]) * -1.f;
+}
+
 glm::mat4& Camera::InvalidateProjection() {
   projection_ = glm::perspective(fov_,
                                  (float)viewport_width_

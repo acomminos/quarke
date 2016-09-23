@@ -17,7 +17,7 @@ namespace pipe {
 struct PointLight {
   float intensity;
   glm::vec3 position;
-  glm::vec3 color;
+  glm::vec4 color;
 };
 
 // A shader stage that additively blends point lights to a light buffer.
@@ -29,9 +29,11 @@ class PhongStage {
                                             GLuint position_tex);
 
   // Instantiates a phong stage drawing to a light buffer.
-  PhongStage(int width, int height, GLuint light_fbo, GLuint light_buffer,
-             GLuint light_tex, GLuint screen_vbo, GLuint color_tex,
-             GLuint normal_tex, GLuint position_tex, GLuint depth_tex);
+  PhongStage(int width, int height, GLuint program,
+             GLuint light_fbo, GLuint light_buffer,
+             GLuint light_tex, GLuint screen_vbo, GLuint screen_vao,
+             GLuint color_tex, GLuint normal_tex, GLuint position_tex,
+             GLuint depth_tex);
 
   void Clear();
 
@@ -42,29 +44,36 @@ class PhongStage {
   // Implicitly clears the light buffer.
   void Resize(int width, int height);
 
-  GLuint light_fbo() const { return light_fbo_; }
-  GLuint light_buffer() const { return light_buffer_; }
-  GLuint light_tex() const { return light_tex_; }
-  static GLuint light_format() { return GL_RGBA; }
+  GLuint fbo() const { return light_fbo_; }
+  GLuint buffer() const { return light_buffer_; }
+  GLuint tex() const { return light_tex_; }
+  static GLuint format() { return GL_RGBA; }
 
  private:
-  static bool BuildShaderProgram(GLuint& out_program,
-                                 GLuint& out_vs,
-                                 GLuint& out_fs);
+  static bool BuildShaderProgram(GLuint& out_program);
 
   int out_width_;
   int out_height_;
 
-  GLuint light_fbo_;
-  GLuint light_buffer_;
-  GLuint light_tex_;
-  GLuint screen_vbo_;
-  GLuint screen_vao_;
+  const GLuint program_;
 
-  GLuint color_tex_;
-  GLuint normal_tex_;
-  GLuint position_tex_;
-  GLuint depth_tex_;
+  const GLuint light_fbo_;
+  const GLuint light_buffer_;
+  const GLuint light_tex_;
+  const GLuint screen_vbo_;
+  const GLuint screen_vao_;
+
+  const GLuint color_tex_;
+  const GLuint normal_tex_;
+  const GLuint position_tex_;
+  const GLuint depth_tex_;
+
+  GLuint color_sampler_location_;
+  GLuint normal_sampler_location_;
+  GLuint position_sampler_location_;
+  GLuint eye_position_location_;
+  GLuint light_position_location_;
+  GLuint light_color_location_;
 };
 
 }  // namespace pipe

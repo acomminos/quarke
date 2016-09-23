@@ -31,6 +31,9 @@ class Camera {
   // Computes a view transformation matrix.
   glm::mat4 ComputeView() const;
 
+  // Gets the camera eye point in world space.
+  glm::vec3 Position() const;
+
   int viewport_width() const { return viewport_width_; }
   int viewport_height() const { return viewport_height_; }
  private:

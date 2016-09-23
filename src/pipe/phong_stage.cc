@@ -37,9 +37,9 @@ uniform sampler2D positionSampler;
 
 uniform vec3 eyePosition;
 uniform vec3 lightPosition;
-uniform vec3 lightColor;
+uniform vec4 lightColor;
 
-in vec4 vUV;
+in vec2 vUV;
 
 out vec4 outLight;
 
@@ -48,7 +48,7 @@ void main(void) {
   vec3 normal = texture(normalSampler, vUV).xyz;
   vec3 pos = texture(positionSampler, vUV).xyz;
 
-  vec4 d = normalize(lightPosition - pos);
+  vec3 d = normalize(lightPosition - pos);
   float dIntensity = dot(d, normal);
   vec4 diffuseColor = albedo * lightColor * dIntensity;
 
@@ -84,7 +84,7 @@ std::unique_ptr<PhongStage> PhongStage::Create(int width,
   glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth_tex, 0);
 
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-    std::cerr << "[gs] Incomplete framebuffer." << std::endl;
+    std::cerr << "[phong] Incomplete framebuffer." << std::endl;
     glDeleteFramebuffers(1, &fbo);
     glDeleteTextures(1, &light_tex);
     glDeleteTextures(1, &depth_tex);
@@ -96,8 +96,14 @@ std::unique_ptr<PhongStage> PhongStage::Create(int width,
   glBindBuffer(GL_ARRAY_BUFFER, screen_vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(SCREEN_VERTICES), SCREEN_VERTICES, GL_STATIC_DRAW);
 
-  return std::make_unique<PhongStage>(width, height, light_tex, LIGHT_BUFFER,
-                                      screen_vbo, screen_vbo, color_tex,
+  GLuint program, vs, fs;
+  if (!BuildShaderProgram(program, vs, fs)) {
+    std::cerr << "[phong] Building shader program failed." << std::endl;
+    return nullptr;
+  }
+
+  return std::make_unique<PhongStage>(width, height, fbo, LIGHT_BUFFER,
+                                      light_tex, screen_vbo, color_tex,
                                       normal_tex, position_tex, depth_tex);
 }
 
@@ -121,6 +127,31 @@ void PhongStage::Illuminate(const game::Camera& camera, const PointLight& light)
   glDrawBuffers(1, (const GLenum*) &light_buffer_);
   glBindBuffer(GL_ARRAY_BUFFER, screen_vbo_);
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+}
+
+bool PhongStage::BuildShaderProgram(GLuint& out_program, GLuint& out_vs, GLuint& out_fs) {
+  GLuint program = glCreateProgram();
+
+  GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+  GLint vs_len = sizeof(PHONG_POINT_VS);
+  glShaderSource(vs, 1, &PHONG_POINT_VS, nullptr);
+  glCompileShader(vs);
+
+  GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+  GLint fs_len = sizeof(PHONG_POINT_FS);
+  glShaderSource(fs, 1, &PHONG_POINT_FS, nullptr);
+  glCompileShader(fs);
+
+  glAttachShader(program, vs);
+  glAttachShader(program, fs);
+  glLinkProgram(program);
+
+  // TODO: get errors here
+
+  out_program = program;
+  out_vs = vs;
+  out_fs = fs;
+  return true;
 }
 
 }  // namespace pipe

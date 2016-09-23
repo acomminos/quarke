@@ -48,7 +48,9 @@ class PhongStage {
   static GLuint light_format() { return GL_RGBA; }
 
  private:
-  void BuildShaderProgram();
+  static bool BuildShaderProgram(GLuint& out_program,
+                                 GLuint& out_vs,
+                                 GLuint& out_fs);
 
   int out_width_;
   int out_height_;

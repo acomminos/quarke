@@ -48,9 +48,11 @@ void Scene::Render() {
   StubMaterialIterator iter(&basicMaterial, meshes_);
   geom_->Render(camera_, iter);
 
-  pipe::PointLight light = {1.0f, glm::vec3(0, -100.f, 0), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
+  pipe::PointLight light1 = {1.0f, glm::vec3(0, -100.f, 0), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
+  pipe::PointLight light2 = {1.0f, glm::vec3(-100.f, 0.f, 0), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
   lighting_->Clear();
-  lighting_->Illuminate(camera_, light);
+  lighting_->Illuminate(camera_, light1);
+  lighting_->Illuminate(camera_, light2);
 
   // FIXME: this blit is the worst
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);

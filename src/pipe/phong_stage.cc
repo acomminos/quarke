@@ -51,7 +51,7 @@ void main(void) {
   if (dIntensity > 0.0) {
     diffuseColor = albedo * lightColor * dIntensity;
   } else {
-    diffuseColor = vec4(0.0, 0.0, 0.0, 1.0);
+    diffuseColor = vec4(0.0, 0.0, 0.0, 0.0);
   }
 
   // TODO: specular component.
@@ -166,6 +166,10 @@ void PhongStage::Illuminate(const game::Camera& camera, const PointLight& light)
   glUniform3fv(eye_position_location_, 1, glm::value_ptr(camera.Position()));
   glUniform3fv(light_position_location_, 1, glm::value_ptr(light.position));
   glUniform4fv(light_color_location_, 1, glm::value_ptr(light.color));
+
+  // Additive blending
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
   glDisable(GL_DEPTH_TEST);
   glDrawArrays(GL_TRIANGLE_FAN, 0, 4);

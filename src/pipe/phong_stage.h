@@ -24,13 +24,14 @@ struct PointLight {
 class PhongStage {
  public:
   // Creates a new phong stage based on color, normal, position, and depth buffers.
-  static std::unique_ptr<PhongStage> Create(GLuint color_tex, GLuint normal_tex,
-                                            GLuint position_tex, GLuint depth_tex);
+  static std::unique_ptr<PhongStage> Create(int width, int height,
+                                            GLuint color_tex, GLuint normal_tex,
+                                            GLuint position_tex);
 
   // Instantiates a phong stage drawing to a light buffer.
-  PhongStage(GLuint light_fbo, GLuint light_buffer, GLuint light_tex,
-             GLuint screen_vbo, GLuint color_tex, GLuint normal_tex,
-             GLuint position_tex, GLuint depth_tex);
+  PhongStage(int width, int height, GLuint light_fbo, GLuint light_buffer,
+             GLuint light_tex, GLuint screen_vbo, GLuint color_tex,
+             GLuint normal_tex, GLuint position_tex, GLuint depth_tex);
 
   void Clear();
 
@@ -44,14 +45,19 @@ class PhongStage {
   GLuint light_fbo() const { return light_fbo_; }
   GLuint light_buffer() const { return light_buffer_; }
   GLuint light_tex() const { return light_tex_; }
+  static GLuint light_format() { return GL_RGBA; }
 
  private:
   void BuildShaderProgram();
+
+  int out_width_;
+  int out_height_;
 
   GLuint light_fbo_;
   GLuint light_buffer_;
   GLuint light_tex_;
   GLuint screen_vbo_;
+  GLuint screen_vao_;
 
   GLuint color_tex_;
   GLuint normal_tex_;

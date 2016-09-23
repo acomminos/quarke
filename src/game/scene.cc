@@ -34,10 +34,11 @@ void Scene::Render() {
   }
 
   if (!lighting_) {
-    lighting_ = pipe::PhongStage::Create(geom_->color_tex(),
+    lighting_ = pipe::PhongStage::Create(camera_.viewport_width(),
+                                         camera_.viewport_height(),
+                                         geom_->color_tex(),
                                          geom_->normal_tex(),
-                                         geom_->position_tex(),
-                                         geom_->depth_tex());
+                                         geom_->position_tex());
     assert(lighting_);
   }
 

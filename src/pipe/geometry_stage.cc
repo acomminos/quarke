@@ -311,7 +311,7 @@ GLuint GeometryStage::BuildFragmentShader(const mat::Material& material) const {
   // XXX: default placeholder material (again)
   // call upon dat material to make frags
   fs << "void main(void) {" << std::endl
-     << "outColor = vColor;" << std::endl
+     << "outColor = vec4(abs(cos(vPosition.x)), abs(cos(vPosition.y)), abs(cos(vPosition.z)), 1.0); //vColor;" << std::endl
      << "outNormal = normalize(vec4(vNormal.xyz, 0.0));" << std::endl
      << "outPosition = vPosition;" << std::endl
      << "}";

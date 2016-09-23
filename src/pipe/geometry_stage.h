@@ -63,7 +63,7 @@ class GeometryStage {
   void Render(const game::Camera& camera, MaterialIterator& iter);
 
   GLuint fbo() const { return fbo_; }
- protected:
+
   GLuint color_tex() const { return color_tex_; }
   static GLenum color_format() { return GL_RGBA; }
 

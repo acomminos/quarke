@@ -28,7 +28,9 @@ static const char* PHONG_POINT_FS = R"(
 uniform sampler2D color;
 uniform sampler2D light;
 uniform sampler2D depth;
+
 uniform vec3 lightPosition;
+uniform vec3 lightColor;
 
 out vec4 outLight;
 

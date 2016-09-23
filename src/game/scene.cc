@@ -33,6 +33,13 @@ void Scene::Render() {
     assert(geom_);
   }
 
+  if (!lighting_) {
+    lighting_ = pipe::PhongStage::Create(geom_->color_tex(),
+                                         geom_->normal_tex(),
+                                         geom_->depth_tex());
+    assert(lighting_);
+  }
+
   geom_->Clear();
   // FIXME: render with basic material for now.
   mat::SolidMaterial basicMaterial(glm::vec4(1.0, 0.0, 0.0, 1.0));

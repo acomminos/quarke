@@ -8,6 +8,7 @@
 #include "geo/mesh.h"
 #include "mat/solid_material.h"
 #include "pipe/geometry_stage.h"
+#include "pipe/phong_stage.h"
 
 namespace quarke {
 namespace game {
@@ -29,8 +30,9 @@ class Scene {
   Camera camera_;
   float rot; // tmp
 
-  // TODO: should we put thepipeline here?
+  // TODO: should we put the pipeline here?
   std::unique_ptr<pipe::GeometryStage> geom_;
+  std::unique_ptr<pipe::PhongStage> lighting_;
 
   typedef std::list<std::unique_ptr<geo::Mesh>> MeshPtrVector;
 

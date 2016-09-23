@@ -1,5 +1,6 @@
 #include "game/scene.h"
 #include "mat/solid_material.h"
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace quarke {
 namespace game {
@@ -10,13 +11,19 @@ Scene::Scene(int width, int height)
   // XXX: testing
   //meshes_.push_back(geo::Mesh::FromOBJ("model/teapot.obj"));
   meshes_.push_back(geo::Mesh::FromOBJ("model/armadillo.obj"));
+
+  auto terrain = geo::Mesh::FromOBJ("model/terrain.obj");
+  terrain->set_transform(
+      glm::translate(glm::mat4(), glm::vec3(0.0, -1.0, 0.0)) *
+      glm::scale(terrain->transform(), glm::vec3(100.0, 1.0, 100.0)));
+  meshes_.push_back(std::move(terrain));
 }
 
 void Scene::Update(float dt) {
   // XXX: demo
   const float rot_speed = 1.5; // rotational speed in radians
   const float rot_dist = 5.0;
-  const float rot_y = 5.0;
+  const float rot_y = 3.0;
   rot = rot + (dt * rot_speed);
   float x = rot_dist * cos(rot);
   float z = rot_dist * sin(rot);

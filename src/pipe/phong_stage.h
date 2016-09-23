@@ -13,6 +13,7 @@ class Camera;
 
 namespace pipe {
 
+// FIXME: a temporary encapsulation of a point light source.
 struct PointLight {
   float intensity;
   glm::vec3 position;
@@ -22,13 +23,14 @@ struct PointLight {
 // A shader stage that additively blends point lights to a light buffer.
 class PhongStage {
  public:
-  // Creates a new phong stage based on color, normal, and depth buffers.
-  static std::unique_ptr<PhongStage> Create(GLuint color_tex, GLuint normal_tex, GLuint depth_tex);
+  // Creates a new phong stage based on color, normal, position, and depth buffers.
+  static std::unique_ptr<PhongStage> Create(GLuint color_tex, GLuint normal_tex,
+                                            GLuint position_tex, GLuint depth_tex);
 
   // Instantiates a phong stage drawing to a light buffer.
   PhongStage(GLuint light_fbo, GLuint light_buffer, GLuint light_tex,
              GLuint screen_vbo, GLuint color_tex, GLuint normal_tex,
-             GLuint depth_tex);
+             GLuint position_tex, GLuint depth_tex);
 
   void Clear();
 
@@ -53,6 +55,7 @@ class PhongStage {
 
   GLuint color_tex_;
   GLuint normal_tex_;
+  GLuint position_tex_;
   GLuint depth_tex_;
 };
 

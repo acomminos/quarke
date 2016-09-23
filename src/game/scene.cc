@@ -15,7 +15,7 @@ Scene::Scene(int width, int height)
 void Scene::Update(float dt) {
   // XXX: demo
   const float rot_speed = 1.5; // rotational speed in radians
-  const float rot_dist = 10.0;
+  const float rot_dist = 5.0;
   const float rot_y = 5.0;
   rot = rot + (dt * rot_speed);
   float x = rot_dist * cos(rot);
@@ -36,6 +36,7 @@ void Scene::Render() {
   if (!lighting_) {
     lighting_ = pipe::PhongStage::Create(geom_->color_tex(),
                                          geom_->normal_tex(),
+                                         geom_->position_tex(),
                                          geom_->depth_tex());
     assert(lighting_);
   }

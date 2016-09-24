@@ -59,7 +59,7 @@ void Scene::Render() {
   geom_->Render(camera_, iter);
 
   pipe::PointLight light1 = {1.0f, 10.0f, glm::vec3(0, 4.f, 1.5f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
-  pipe::PointLight light2 = {1.0f, 20.0f, glm::vec3(-5.f, 0.f, 0), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
+  pipe::PointLight light2 = {1.0f, 20.0f, glm::vec3(-5.f, 2.f, 1.5f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)};
   lighting_->Clear();
   lighting_->Illuminate(camera_, light1);
   //lighting_->Illuminate(camera_, light2);

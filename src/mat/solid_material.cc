@@ -5,21 +5,23 @@
 namespace quarke {
 namespace mat {
 
-SolidMaterial::SolidMaterial(glm::vec4 color) : color_(color) { }
+SolidMaterial::SolidMaterial(glm::vec4 color) : color_(color), color_location_(-1) { }
 
 void SolidMaterial::BuildVertexShader(std::ostream& vs) const {
-  vs << "uniform vec4 solidColor;" << std::endl;
-  vs << "void main() {";
-  vs << "outColor = solidColor;";
-  vs << "}";
 }
 
 void SolidMaterial::BuildFragmentShader(std::ostream& fs) const {
+  fs << "uniform vec4 solidColor;" << std::endl
+     << "void material() {" << std::endl
+     << "outColor = solidColor;" << std::endl
+     << "}" << std::endl;
 }
 
 void SolidMaterial::OnBindProgram(GLuint program) {
-  GLuint colorLocation = glGetUniformLocation(program, "solidColor");
-  glUniform4fv(colorLocation, 4, glm::value_ptr(color_));
+  if (color_location_ == -1) {
+    color_location_ = glGetUniformLocation(program, "solidColor");
+  }
+  glUniform4fv(color_location_, 1, glm::value_ptr(color_));
 }
 
 void SolidMaterial::OnUnbindProgram(GLuint program) {

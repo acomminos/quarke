@@ -19,8 +19,8 @@ namespace mat {
 class Material {
  public:
   // Generates a material-specific vertex shader.
-  // The material is expected to provide the "main" function for the shader, as
-  // well as populate all outputs of the geometry stage pipeline.
+  // The material is expected to provide a "material" function for the shader.
+  // This typically will set up any custom per-vertex attributes to interpolate.
   // TODO: link in the geometry stage here to reduce coupling.
   virtual void BuildVertexShader(std::ostream& vs) const = 0;
   // Generates a material-specific fragment shader.
@@ -29,6 +29,8 @@ class Material {
   // TODO: link in the geometry stage here to reduce coupling.
   virtual void BuildFragmentShader(std::ostream& fs) const = 0;
 
+  // Returns true if a custom VS is used for the material.
+  virtual bool has_vertex_shader() const = 0;
   // Returns true if texture coordinates are used/required.
   virtual bool use_texture() const = 0;
 

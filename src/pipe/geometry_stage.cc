@@ -243,7 +243,6 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
      << "in vec3 position;" << std::endl;
   vs << "layout(location = " << VS_IN_NORMAL_LOCATION << ") "
      << "in vec3 normal;" << std::endl;
-
   if (material.use_texture()) {
     vs << "layout(location = " << VS_IN_TEXCOORD_LOCATION << ") "
        << "in vec2 texcoord;" << std::endl;
@@ -251,7 +250,6 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
 
   // XXX: do we even want to deal with color vs. texturing here?
   //      we could probably delegate this to material implementations.
-  vs << "out vec4 vColor;" << std::endl;
   vs << "out vec4 vNormal;" << std::endl;
   vs << "out vec4 vPosition;" << std::endl;
 
@@ -259,13 +257,12 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
     vs << "out vec2 vTexcoord;" << std::endl;
   }
 
-  // XXX: default placeholder material
-  // TODO: source from material here
-  // material.BuildVertexShader(position, normal, texcoord)
+  // Source from material to provide the material() function
+  if (material.has_vertex_shader()) {
+    material.BuildVertexShader(vs);
+  }
 
   vs << "void main(void) {" << std::endl
-     // XXX: hwhite test
-     << "vColor = vec4(1.0, 1.0, 1.0, 1.0);" << std::endl
      << "vNormal = normalize(" << UNIFORM_NORMAL_MATRIX_NAME << " * vec4(normal, 0.0));" << std::endl
      << "vPosition = " << UNIFORM_MODEL_MATRIX_NAME << " * vec4(position, 1.0);" << std::endl;
 
@@ -273,8 +270,14 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
      vs << "vTexcoord = texcoord;" << std::endl;
   }
 
-  vs << "gl_Position = " << UNIFORM_MVP_MATRIX_NAME << " * vec4(position, 1.0);" << std::endl
-     << "}";
+  vs << "gl_Position = " << UNIFORM_MVP_MATRIX_NAME << " * vec4(position, 1.0);" << std::endl;
+
+  // Call the generated material() function from the VS
+  if (material.has_vertex_shader()) {
+    vs << "material();" << std::endl;
+  }
+
+  vs << "}";
 
 #ifdef QUARKE_DEBUG
   std::cout << "[gs] geometry stage generated vertex shader:"
@@ -298,12 +301,10 @@ GLuint GeometryStage::BuildFragmentShader(const mat::Material& material) const {
   fs << "uniform mat4 " << UNIFORM_MVP_MATRIX_NAME << ";" << std::endl;
   fs << "uniform mat4 " << UNIFORM_NORMAL_MATRIX_NAME << ";" << std::endl;
 
-  fs << "in vec4 vColor;" << std::endl;
   fs << "in vec4 vNormal;" << std::endl;
   fs << "in vec4 vPosition;" << std::endl;
 
   if (material.use_texture()) {
-    fs << "uniform sampler2D " << UNIFORM_SAMPLER_MATRIX_NAME << ";" << std::endl;
     fs << "in vec4 vTexcoord;" << std::endl;
   }
 
@@ -314,12 +315,14 @@ GLuint GeometryStage::BuildFragmentShader(const mat::Material& material) const {
   fs << "layout(location = " << FS_OUT_POSITION_BUFFER << ") "
      << "out vec4 outPosition;" << std::endl;
 
-  // XXX: default placeholder material (again)
   // call upon dat material to make frags
+  material.BuildFragmentShader(fs);
+
   fs << "void main(void) {" << std::endl
      << "outColor = vec4(abs(cos(vPosition.x)), abs(cos(vPosition.y)), abs(cos(vPosition.z)), 1.0); //vColor;" << std::endl
      << "outNormal = normalize(vec4(vNormal.xyz, 0.0));" << std::endl
      << "outPosition = vPosition;" << std::endl
+     << "material();" << std::endl
      << "}";
 
 #ifdef QUARKE_DEBUG

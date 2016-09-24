@@ -51,7 +51,7 @@ void Scene::Render() {
 
   geom_->Clear();
   // FIXME: render with basic material for now.
-  mat::SolidMaterial basicMaterial(glm::vec4(1.0, 0.0, 0.0, 1.0));
+  mat::SolidMaterial basicMaterial(glm::vec4(1.0, 1.0, 1.0, 1.0));
   StubMaterialIterator iter(&basicMaterial, meshes_);
   geom_->Render(camera_, iter);
 

@@ -15,9 +15,11 @@ class SolidMaterial : public Material {
   void BuildFragmentShader(std::ostream& fs) const override;
   void OnBindProgram(GLuint program) override;
   void OnUnbindProgram(GLuint program) override;
+  bool has_vertex_shader() const override { return false; }
   bool use_texture() const override { return false; }
  private:
   const glm::vec4 color_;
+  GLint color_location_;
 };
 
 }  // namespace mat

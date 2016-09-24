@@ -10,9 +10,12 @@ Scene::Scene(int width, int height)
   , rot(0) {
   // XXX: testing
   //meshes_.push_back(geo::Mesh::FromOBJ("model/teapot.obj"));
-  meshes_.push_back(geo::Mesh::FromOBJ("model/armadillo.obj"));
+  auto armadillo = geo::Mesh::FromOBJ("model/armadillo.obj");
+  armadillo->set_color(glm::vec4(0.2, 0.6, 0.2, 1.0));
+  meshes_.push_back(std::move(armadillo));
 
   auto terrain = geo::Mesh::FromOBJ("model/terrain.obj");
+  terrain->set_color(glm::vec4(0.2, 0.2, 0.2, 1.0));
   terrain->set_transform(
       glm::translate(glm::mat4(), glm::vec3(0.0, -1.0, 0.0)) *
       glm::scale(terrain->transform(), glm::vec3(50.0, 1.0, 50.0)));

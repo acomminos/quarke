@@ -1,4 +1,5 @@
 #include "mat/solid_material.h"
+#include "geo/mesh.h"
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -21,11 +22,10 @@ void SolidMaterial::OnBindProgram(GLuint program) {
   if (color_location_ == -1) {
     color_location_ = glGetUniformLocation(program, "solidColor");
   }
-  glUniform4fv(color_location_, 1, glm::value_ptr(color_));
 }
 
-void SolidMaterial::OnUnbindProgram(GLuint program) {
-
+void SolidMaterial::PreDrawMesh(const geo::Mesh& mesh) {
+  glUniform4fv(color_location_, 1, glm::value_ptr(mesh.color()));
 }
 
 }  // namespace mat

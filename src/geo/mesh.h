@@ -72,12 +72,18 @@ class Mesh {
   void set_transform(const glm::mat4& transform) { transform_ = transform; }
   glm::mat4 transform() const { return transform_; }
 
+  // TODO: remove me, and replace by generic typed maps
+  glm::vec4 set_color(const glm::vec4 color) { color_ = color; }
+  // Gets the mesh's inherent color, used by some material implementations.
+  glm::vec4 color() const { return color_; }
+
   VertexBuffer& array_buffer() const { return *array_buffer_; }
   GLuint num_vertices() const { return num_vertices_; }
  private:
   // TODO. simple material ownership might not cut it.
   //Material& material_;
   glm::mat4 transform_;
+  glm::vec4 color_;
 
   std::shared_ptr<VertexBuffer> array_buffer_;
   GLuint num_vertices_;

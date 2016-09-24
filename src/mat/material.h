@@ -6,6 +6,11 @@
 #include <sstream>
 
 namespace quarke {
+
+namespace geo {
+class Mesh;
+}  // namespace geo
+
 namespace mat {
 
 // A homomorphism with a shader, materials encapsulate a particular
@@ -15,7 +20,9 @@ namespace mat {
 // A material only determines the G-buffer textured output, not the lighting
 // characteristics (TODO: so far).
 //
-// XXX: stub
+// Each mesh may have custom uniforms to provide the material with, e.g. color.
+// The material may access these in {Pre,Post}DrawMesh.
+// FIXME: currently, we access hardcoded mesh attributes.
 class Material {
  public:
   // Generates a material-specific vertex shader.
@@ -38,6 +45,12 @@ class Material {
   virtual void OnBindProgram(GLuint program) {}
   // Unbinds any custom inputs built by the material.
   virtual void OnUnbindProgram(GLuint program) {}
+
+  // Called before drawing a mesh with this material.
+  // Typically, bind mesh-specific uniforms here.
+  virtual void PreDrawMesh(const geo::Mesh& mesh) {};
+  // Called after drawing a mesh with this material.
+  virtual void PostDrawMesh(const geo::Mesh& mesh) {};
 };
 
 }  // namespace mat

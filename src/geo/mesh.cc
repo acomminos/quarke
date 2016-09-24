@@ -103,7 +103,8 @@ std::unique_ptr<Mesh> Mesh::FromOBJ(const std::string& path) {
 }
 
 Mesh::Mesh(std::shared_ptr<VertexBuffer> array_buffer, GLuint num_vertices)
-  : array_buffer_(array_buffer), num_vertices_(num_vertices) {
+  : array_buffer_(array_buffer), num_vertices_(num_vertices)
+  , color_(glm::vec4(1.f, 1.f, 1.f, 1.f)) {
 }
 
 }  // namespace geo

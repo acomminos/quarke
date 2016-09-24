@@ -14,7 +14,7 @@ class SolidMaterial : public Material {
   void BuildVertexShader(std::ostream& vs) const override;
   void BuildFragmentShader(std::ostream& fs) const override;
   void OnBindProgram(GLuint program) override;
-  void OnUnbindProgram(GLuint program) override;
+  void PreDrawMesh(const geo::Mesh& mesh) override;
   bool has_vertex_shader() const override { return false; }
   bool use_texture() const override { return false; }
  private:

@@ -220,9 +220,13 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter) {
       glm::mat4 normal_matrix = glm::transpose(glm::inverse(view_matrix * mesh->transform()));
       glUniformMatrix4fv(normal_matrix_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
 
+      mat->PreDrawMesh(*mesh); // setup per-mesh uniform attributes
+
       glDisable(GL_BLEND);
       glDrawArrays(GL_TRIANGLES, 0, mesh->num_vertices());
       glDeleteVertexArrays(1, &vao); // XXX
+
+      mat->PostDrawMesh(*mesh);
     }
 
     mat->OnUnbindProgram(program);

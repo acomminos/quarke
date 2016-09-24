@@ -37,6 +37,7 @@ uniform sampler2DRect positionSampler;
 uniform vec3 eye;
 uniform vec3 lightPosition;
 uniform vec4 lightColor;
+uniform float lightDistance;
 
 out vec4 outLight;
 
@@ -45,7 +46,7 @@ void main(void) {
   vec3 normal = texture(normalSampler, gl_FragCoord.xy).xyz;
   vec3 pos = texture(positionSampler, gl_FragCoord.xy).xyz;
 
-  vec3 d = normalize(pos - lightPosition);
+  vec3 d = normalize(lightPosition - pos);
   float dIntensity = dot(d, normal);
   vec4 diffuseColor;
   if (dIntensity > 0.0) {
@@ -54,9 +55,14 @@ void main(void) {
     diffuseColor = vec4(0.0, 0.0, 0.0, 0.0);
   }
 
+  float dist = distance(pos, lightPosition);
+
+  // Use a nonlinearity for falloff around the edges.
+  float lightIntensity = max(1.0 - pow(dist/lightDistance, 2.0), 0.0);
+
   // TODO: specular component.
 
-  outLight = diffuseColor;
+  outLight = lightIntensity * diffuseColor;
 }
 )";
 
@@ -134,6 +140,7 @@ PhongStage::PhongStage(int width, int height, GLuint program,
   eye_position_location_ = glGetUniformLocation(program, "eye");
   light_position_location_ = glGetUniformLocation(program, "lightPosition");
   light_color_location_ = glGetUniformLocation(program, "lightColor");
+  light_distance_location_ = glGetUniformLocation(program, "lightDistance");
 }
 
 void PhongStage::Clear() {
@@ -166,6 +173,7 @@ void PhongStage::Illuminate(const game::Camera& camera, const PointLight& light)
   glUniform3fv(eye_position_location_, 1, glm::value_ptr(camera.Position()));
   glUniform3fv(light_position_location_, 1, glm::value_ptr(light.position));
   glUniform4fv(light_color_location_, 1, glm::value_ptr(light.color));
+  glUniform1f(light_distance_location_, light.max_distance);
 
   // Additive blending
   glEnable(GL_BLEND);

@@ -9,6 +9,7 @@
 namespace quarke {
 namespace pipe {
 
+static const char* UNIFORM_MODEL_MATRIX_NAME = "model_matrix";
 static const char* UNIFORM_MVP_MATRIX_NAME = "mvp_matrix";
 static const char* UNIFORM_NORMAL_MATRIX_NAME = "normal_matrix";
 static const char* UNIFORM_SAMPLER_MATRIX_NAME = "sampler";
@@ -148,6 +149,7 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter) {
 
     mat->OnBindProgram(program);
 
+    GLuint model_location = glGetUniformLocation(program, UNIFORM_MODEL_MATRIX_NAME);
     GLuint mvp_location = glGetUniformLocation(program, UNIFORM_MVP_MATRIX_NAME);
     GLuint normal_matrix_location = glGetUniformLocation(program, UNIFORM_NORMAL_MATRIX_NAME);
 
@@ -211,6 +213,8 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter) {
           break;
       }
 
+      glm::mat4 model_matrix = mesh->transform();
+      glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
       glm::mat4 mvp_matrix = vp_matrix * mesh->transform();
       glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
       glm::mat4 normal_matrix = glm::transpose(glm::inverse(view_matrix * mesh->transform()));
@@ -231,6 +235,7 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
   std::ostringstream vs;
   vs << "#version 330" << std::endl;
 
+  vs << "uniform mat4 " << UNIFORM_MODEL_MATRIX_NAME << ";" << std::endl;
   vs << "uniform mat4 " << UNIFORM_MVP_MATRIX_NAME << ";" << std::endl;
   vs << "uniform mat4 " << UNIFORM_NORMAL_MATRIX_NAME << ";" << std::endl;
 
@@ -262,7 +267,7 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
      // XXX: hwhite test
      << "vColor = vec4(1.0, 1.0, 1.0, 1.0);" << std::endl
      << "vNormal = normalize(" << UNIFORM_NORMAL_MATRIX_NAME << " * vec4(normal, 0.0));" << std::endl
-     << "vPosition = vec4(position, 1.0);" << std::endl;
+     << "vPosition = " << UNIFORM_MODEL_MATRIX_NAME << " * vec4(position, 1.0);" << std::endl;
 
   if (material.use_texture()) {
      vs << "vTexcoord = texcoord;" << std::endl;

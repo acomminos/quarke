@@ -16,6 +16,7 @@ namespace pipe {
 // FIXME: a temporary encapsulation of a point light source.
 struct PointLight {
   float intensity;
+  float max_distance; // maximum reach of effect of a light
   glm::vec3 position;
   glm::vec4 color;
 };
@@ -74,6 +75,7 @@ class PhongStage {
   GLuint eye_position_location_;
   GLuint light_position_location_;
   GLuint light_color_location_;
+  GLuint light_distance_location_;
 };
 
 }  // namespace pipe

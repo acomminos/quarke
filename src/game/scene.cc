@@ -15,7 +15,7 @@ Scene::Scene(int width, int height)
   auto terrain = geo::Mesh::FromOBJ("model/terrain.obj");
   terrain->set_transform(
       glm::translate(glm::mat4(), glm::vec3(0.0, -1.0, 0.0)) *
-      glm::scale(terrain->transform(), glm::vec3(100.0, 1.0, 100.0)));
+      glm::scale(terrain->transform(), glm::vec3(50.0, 1.0, 50.0)));
   meshes_.push_back(std::move(terrain));
 }
 
@@ -55,11 +55,11 @@ void Scene::Render() {
   StubMaterialIterator iter(&basicMaterial, meshes_);
   geom_->Render(camera_, iter);
 
-  pipe::PointLight light1 = {1.0f, glm::vec3(0, -100.f, 0), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
-  pipe::PointLight light2 = {1.0f, glm::vec3(-100.f, 0.f, 0), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
+  pipe::PointLight light1 = {1.0f, 10.0f, glm::vec3(0, 3.f, 0), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
+  pipe::PointLight light2 = {1.0f, 20.0f, glm::vec3(-5.f, 0.f, 0), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
   lighting_->Clear();
   lighting_->Illuminate(camera_, light1);
-  lighting_->Illuminate(camera_, light2);
+  //lighting_->Illuminate(camera_, light2);
 
   // FIXME: this blit is the worst
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);

@@ -69,10 +69,12 @@ class GeometryStage {
   static GLenum color_format() { return GL_RGBA; }
 
   GLuint normal_tex() const { return normal_tex_; }
-  static GLenum normal_format() { return GL_RGBA; }
+  // Need GL_RGBA32F to ensure signed representation.
+  static GLenum normal_format() { return GL_RGBA32F; }
 
   GLuint position_tex() const { return position_tex_; }
-  static GLenum position_format() { return GL_RGBA; }
+  // Need GL_RGBA32F to ensure signed representation.
+  static GLenum position_format() { return GL_RGBA32F; }
 
   GLuint depth_tex() const { return depth_tex_; }
   static GLuint depth_format() { return GL_DEPTH_COMPONENT; }

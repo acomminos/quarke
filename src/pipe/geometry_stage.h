@@ -61,7 +61,8 @@ class GeometryStage {
   void Clear();
 
   // Iterates over the given mesh iterator, drawing each one per-material.
-  void Render(const game::Camera& camera, MaterialIterator& iter);
+  void Render(const game::Camera& camera, MaterialIterator& iter,
+              bool color = true, bool normal = true, bool position = true);
 
   GLuint fbo() const { return fbo_; }
 

@@ -194,6 +194,14 @@ void PhongStage::Illuminate(const game::Camera& camera, const PointLight& light)
   glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
+void PhongStage::Resize(int width, int height) {
+  out_width_ = width;
+  out_height_ = height;
+  glBindTexture(GL_TEXTURE_RECTANGLE, light_tex_);
+  glTexImage2D(GL_TEXTURE_RECTANGLE, 0, format(), width, height, 0,
+               GL_RGBA, GL_FLOAT, nullptr);
+}
+
 bool PhongStage::BuildShaderProgram(GLuint& out_program) {
   GLuint program = glCreateProgram();
   GLint compiled;

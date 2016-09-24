@@ -99,7 +99,8 @@ void GeometryStage::SetOutputSize(int width, int height) {
                GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 }
 
-void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter) {
+void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter,
+                           bool color, bool normal, bool position) {
   if (camera.viewport_width() != out_width_ ||
       camera.viewport_height() != out_height_)
   {
@@ -118,7 +119,12 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter) {
   // - want to use glBindFragDataLocation to map to one of these buffers.
   // having draw buffers bound here is sort of a reasonable assumption, since
   // we define their locations internal to this class.
-  glDrawBuffers(3, (const GLenum[]) { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 });
+  const GLenum buffers[] = {
+    color ? GL_COLOR_ATTACHMENT0 : (GLenum) GL_NONE,
+    normal ? GL_COLOR_ATTACHMENT1 : (GLenum) GL_NONE,
+    position ? GL_COLOR_ATTACHMENT2 : (GLenum) GL_NONE
+  };
+  glDrawBuffers(3, buffers);
 
   glm::mat4 vp_matrix = camera.ComputeProjection();
   glm::mat4 view_matrix = camera.ComputeView();

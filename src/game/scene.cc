@@ -33,7 +33,7 @@ Scene::Scene(int width, int height)
 
 void Scene::Update(float dt) {
   // XXX: demo
-  const float rot_speed = 1.5; // rotational speed in radians
+  const float rot_speed = 1.2; // rotational speed in radians
   const float rot_dist = 5.0;
   const float rot_y = 3.0;
   rot = rot + (dt * rot_speed);
@@ -98,7 +98,7 @@ void Scene::Render() {
                     2 * width/3, 0, width, height/3,
                     GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
-  // Draw light buffer in middle right
+  // Draw light buffer in top left
   glBindFramebuffer(GL_READ_FRAMEBUFFER, lighting_->fbo());
   glReadBuffer(lighting_->buffer());
   glBlitFramebuffer(0, 0, width, height,
@@ -110,6 +110,8 @@ void Scene::Render() {
 
 void Scene::OnResize(int width, int height) {
   camera_.SetViewport(width, height);
+  if (lighting_)
+    lighting_->Resize(width, height);
 }
 
 }  // namespace game

@@ -24,8 +24,8 @@ class Material {
   // TODO: link in the geometry stage here to reduce coupling.
   virtual void BuildVertexShader(std::ostream& vs) const = 0;
   // Generates a material-specific fragment shader.
-  // The material is expected to provide the "main" function for the shader, as
-  // well as populate all outputs of the geometry stage pipeline.
+  // The material is expected to provide the "material" function for the shader.
+  // This usually only needs to set the `outColor` value for each fragment.
   // TODO: link in the geometry stage here to reduce coupling.
   virtual void BuildFragmentShader(std::ostream& fs) const = 0;
 

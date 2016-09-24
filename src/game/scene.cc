@@ -20,6 +20,15 @@ Scene::Scene(int width, int height)
       glm::translate(glm::mat4(), glm::vec3(0.0, -1.0, 0.0)) *
       glm::scale(terrain->transform(), glm::vec3(200.0, 1.0, 200.0)));
   meshes_.push_back(std::move(terrain));
+
+  auto bunny = geo::Mesh::FromOBJ("model/bunny.obj");
+  bunny->set_color(glm::vec4(0.8, 0.8, 0.8, 1.0));
+  bunny->set_transform(
+      glm::translate(glm::mat4(), glm::vec3(1.5, -1.0, 0.0)) *
+      glm::rotate(glm::mat4(), 180.f, glm::vec3(0.0, 1.0, 0.0)) *
+      glm::scale(glm::mat4(), glm::vec3(0.25, 0.25, 0.25))
+  );
+  meshes_.push_back(std::move(bunny));
 }
 
 void Scene::Update(float dt) {

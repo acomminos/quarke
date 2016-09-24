@@ -15,10 +15,10 @@ Scene::Scene(int width, int height)
   meshes_.push_back(std::move(armadillo));
 
   auto terrain = geo::Mesh::FromOBJ("model/terrain.obj");
-  terrain->set_color(glm::vec4(0.2, 0.2, 0.2, 1.0));
+  terrain->set_color(glm::vec4(0.1, 0.1, 0.1, 1.0));
   terrain->set_transform(
       glm::translate(glm::mat4(), glm::vec3(0.0, -1.0, 0.0)) *
-      glm::scale(terrain->transform(), glm::vec3(100.0, 1.0, 100.0)));
+      glm::scale(terrain->transform(), glm::vec3(200.0, 1.0, 200.0)));
   meshes_.push_back(std::move(terrain));
 }
 
@@ -58,7 +58,7 @@ void Scene::Render() {
   StubMaterialIterator iter(&basicMaterial, meshes_);
   geom_->Render(camera_, iter);
 
-  pipe::PointLight light1 = {1.0f, 10.0f, glm::vec3(0, 4.f, 1.5f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
+  pipe::PointLight light1 = {1.0f, 8.0f, glm::vec3(0, 4.f, 1.5f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
   pipe::PointLight light2 = {1.0f, 20.0f, glm::vec3(-5.f, 2.f, 1.5f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)};
   lighting_->Clear();
   lighting_->Illuminate(camera_, light1);

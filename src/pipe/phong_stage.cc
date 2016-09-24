@@ -39,6 +39,9 @@ uniform vec3 lightPosition;
 uniform vec4 lightColor;
 uniform float lightDistance;
 
+// TODO: implement this per-material. perhaps a specular buffer?
+const float specularPower = 10.0;
+
 out vec4 outLight;
 
 void main(void) {
@@ -55,14 +58,22 @@ void main(void) {
     diffuseColor = vec4(0.0, 0.0, 0.0, 0.0);
   }
 
-  float dist = distance(pos, lightPosition);
+  vec3 dEye = normalize(eye - pos);
+  vec3 half = normalize(dEye + d);
 
+  vec4 specularColor;
+  float sIntensity = dot(half, normal);
+  if (sIntensity > 0.0) {
+    specularColor = lightColor * pow(sIntensity, specularPower);
+  } else {
+    specularColor = vec4(0.0, 0.0, 0.0, 0.0);
+  }
+
+  float dist = distance(pos, lightPosition);
   // Use a nonlinearity for falloff around the edges.
   float lightIntensity = max(1.0 - pow(dist/lightDistance, 2.0), 0.0);
 
-  // TODO: specular component.
-
-  outLight = lightIntensity * diffuseColor;
+  outLight = lightIntensity * (diffuseColor + specularColor);
 }
 )";
 

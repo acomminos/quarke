@@ -18,7 +18,7 @@ Scene::Scene(int width, int height)
   terrain->set_color(glm::vec4(0.2, 0.2, 0.2, 1.0));
   terrain->set_transform(
       glm::translate(glm::mat4(), glm::vec3(0.0, -1.0, 0.0)) *
-      glm::scale(terrain->transform(), glm::vec3(50.0, 1.0, 50.0)));
+      glm::scale(terrain->transform(), glm::vec3(100.0, 1.0, 100.0)));
   meshes_.push_back(std::move(terrain));
 }
 
@@ -58,7 +58,7 @@ void Scene::Render() {
   StubMaterialIterator iter(&basicMaterial, meshes_);
   geom_->Render(camera_, iter);
 
-  pipe::PointLight light1 = {1.0f, 10.0f, glm::vec3(0, 3.f, 0), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
+  pipe::PointLight light1 = {1.0f, 10.0f, glm::vec3(0, 4.f, 1.5f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
   pipe::PointLight light2 = {1.0f, 20.0f, glm::vec3(-5.f, 0.f, 0), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
   lighting_->Clear();
   lighting_->Illuminate(camera_, light1);
@@ -93,7 +93,7 @@ void Scene::Render() {
   glBindFramebuffer(GL_READ_FRAMEBUFFER, lighting_->fbo());
   glReadBuffer(lighting_->buffer());
   glBlitFramebuffer(0, 0, width, height,
-                    2 * width/3, height/3, width, 2 * height/3,
+                    0, height/3, 2 * width / 3, height,
                     GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
   // TODO: draw light buffer in top right, draw blended buffer in top left

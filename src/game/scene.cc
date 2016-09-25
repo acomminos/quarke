@@ -47,6 +47,8 @@ Scene::Scene(int width, int height)
     glBindTexture(GL_TEXTURE_2D, pepper_tex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pepper.width, pepper.height, 0,
                  GL_RGB, GL_UNSIGNED_BYTE, pepper.data);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_BLUE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_RED);
     glGenerateMipmap(GL_TEXTURE_2D);
     pepper_tex_ = pepper_tex;
     free(pepper.data);

@@ -1,5 +1,6 @@
 #include "game/scene.h"
 #include "mat/solid_material.h"
+#include "util/toytga.h"
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace quarke {
@@ -29,6 +30,11 @@ Scene::Scene(int width, int height)
       glm::scale(glm::mat4(), glm::vec3(0.25, 0.25, 0.25))
   );
   meshes_.push_back(std::move(bunny));
+
+  util::TGA::Descriptor pepper;
+  if (util::TGA::LoadTGA("tex/pepper-rle.tga", pepper)) {
+    printf("successfully loaded testing TGA.\n");
+  }
 }
 
 void Scene::Update(float dt) {
@@ -63,7 +69,7 @@ void Scene::Render() {
 
   geom_->Clear();
   // FIXME: render with basic material for now.
-  mat::SolidMaterial basicMaterial(glm::vec4(1.0, 1.0, 1.0, 1.0));
+  mat::SolidMaterial basicMaterial;
   StubMaterialIterator iter(&basicMaterial, meshes_);
   geom_->Render(camera_, iter);
 

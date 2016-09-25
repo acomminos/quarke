@@ -10,7 +10,7 @@ namespace mat {
 // A material with a solid colour.
 class SolidMaterial : public Material {
  public:
-  SolidMaterial(glm::vec4 color);
+  SolidMaterial();
   void BuildVertexShader(std::ostream& vs) const override;
   void BuildFragmentShader(std::ostream& fs) const override;
   void OnBindProgram(GLuint program) override;
@@ -18,7 +18,6 @@ class SolidMaterial : public Material {
   bool has_vertex_shader() const override { return false; }
   bool use_texture() const override { return false; }
  private:
-  const glm::vec4 color_;
   GLint color_location_;
 };
 

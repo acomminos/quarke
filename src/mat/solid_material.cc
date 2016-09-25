@@ -6,7 +6,7 @@
 namespace quarke {
 namespace mat {
 
-SolidMaterial::SolidMaterial(glm::vec4 color) : color_(color), color_location_(-1) { }
+SolidMaterial::SolidMaterial() : color_location_(-1) { }
 
 void SolidMaterial::BuildVertexShader(std::ostream& vs) const {
 }

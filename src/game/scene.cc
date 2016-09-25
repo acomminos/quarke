@@ -133,7 +133,7 @@ void Scene::Render() {
   glReadBuffer(lighting_->buffer());
   glBlitFramebuffer(0, 0, width, height,
                     0, height/3, 2 * width / 3, height,
-                    GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+                    GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
   // TODO: draw light buffer in top right, draw blended buffer in top left
 }

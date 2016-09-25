@@ -36,11 +36,6 @@ class Material {
   // TODO: link in the geometry stage here to reduce coupling.
   virtual void BuildFragmentShader(std::ostream& fs) const = 0;
 
-  // Returns true if a custom VS is used for the material.
-  virtual bool has_vertex_shader() const = 0;
-  // Returns true if texture coordinates are used/required.
-  virtual bool use_texture() const = 0;
-
   // Binds any custom inputs built by the material.
   virtual void OnBindProgram(GLuint program) {}
   // Unbinds any custom inputs built by the material.
@@ -51,6 +46,11 @@ class Material {
   virtual void PreDrawMesh(const geo::Mesh& mesh) {};
   // Called after drawing a mesh with this material.
   virtual void PostDrawMesh(const geo::Mesh& mesh) {};
+
+  // Returns true if a custom VS is used for the material.
+  virtual bool has_vertex_shader() const = 0;
+  // Returns true if texture coordinates are used/required.
+  virtual bool use_texture() const = 0;
 };
 
 }  // namespace mat

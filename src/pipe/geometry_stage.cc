@@ -263,10 +263,6 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
   vs << "out vec4 vNormal;" << std::endl;
   vs << "out vec4 vPosition;" << std::endl;
 
-  if (material.use_texture()) {
-    vs << "out vec2 vTexcoord;" << std::endl;
-  }
-
   // Source from material to provide the material() function
   if (material.has_vertex_shader()) {
     material.BuildVertexShader(vs);
@@ -275,10 +271,6 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
   vs << "void main(void) {" << std::endl
      << "vNormal = normalize(" << UNIFORM_NORMAL_MATRIX_NAME << " * vec4(normal, 0.0));" << std::endl
      << "vPosition = " << UNIFORM_MODEL_MATRIX_NAME << " * vec4(position, 1.0);" << std::endl;
-
-  if (material.use_texture()) {
-     vs << "vTexcoord = texcoord;" << std::endl;
-  }
 
   vs << "gl_Position = " << UNIFORM_MVP_MATRIX_NAME << " * vec4(position, 1.0);" << std::endl;
 
@@ -313,10 +305,6 @@ GLuint GeometryStage::BuildFragmentShader(const mat::Material& material) const {
 
   fs << "in vec4 vNormal;" << std::endl;
   fs << "in vec4 vPosition;" << std::endl;
-
-  if (material.use_texture()) {
-    fs << "in vec4 vTexcoord;" << std::endl;
-  }
 
   fs << "layout(location = " << FS_OUT_COLOR_BUFFER << ") "
      << "out vec4 outColor;" << std::endl;

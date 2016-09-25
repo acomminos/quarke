@@ -159,7 +159,12 @@ bool FragmentStage::BuildShaderProgram(GLuint& out_program, const char* fs_sourc
   glAttachShader(program, fs);
   glLinkProgram(program);
 
-  // TODO: check link status
+  GLint linked;
+  glGetProgramiv(program, GL_LINK_STATUS, &linked);
+  if (!linked) {
+    std::cerr << "[fs] failed to link program!" << std::endl;
+    return false;
+  }
 
   glDetachShader(program, vs);
   glDetachShader(program, fs);

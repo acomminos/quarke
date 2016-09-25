@@ -77,6 +77,13 @@ void Scene::Render() {
     assert(geom_);
   }
 
+  if (!ambient_) {
+    ambient_ = pipe::AmbientStage::Create(camera_.viewport_width(),
+                                          camera_.viewport_height(),
+                                          glm::vec4(0.2, 0.2, 0.2, 1.0));
+    assert(ambient_);
+  }
+
   if (!lighting_) {
     lighting_ = pipe::PhongStage::Create(camera_.viewport_width(),
                                          camera_.viewport_height(),
@@ -97,18 +104,30 @@ void Scene::Render() {
   StubMaterialIterator texIter(&texturedMaterial, textured_meshes_);
   geom_->Render(camera_, texIter);
 
+  ambient_->Clear();
+  ambient_->Render(geom_->color_tex());
+
+  lighting_->Clear();
+
+  int width = camera_.viewport_width();
+  int height = camera_.viewport_height();
+
+  // XXX: share a light buffer between the ambient and phong stages.
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, ambient_->ambient_fbo());
+  glBindFramebuffer(GL_DRAW_FRAMEBUFFER, lighting_->fbo());
+  glReadBuffer(ambient_->ambient_buffer());
+  const GLenum dbuffers[] = { lighting_->buffer() };
+  glDrawBuffers(1, dbuffers);
+  glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
   pipe::PointLight light1 = {1.0f, 8.0f, glm::vec3(0, 4.f, 1.5f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
   pipe::PointLight light2 = {1.0f, 4.0f, glm::vec3(0.f, 2.f, -2.5f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
-  lighting_->Clear();
   lighting_->Illuminate(camera_, light1);
   //lighting_->Illuminate(camera_, light2);
 
   // FIXME: this blit is the worst
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
   glBindFramebuffer(GL_READ_FRAMEBUFFER, geom_->fbo());
-
-  int width = camera_.viewport_width();
-  int height = camera_.viewport_height();
 
   // Draw color buffer in bottom left
   glReadBuffer(GL_COLOR_ATTACHMENT0);
@@ -127,6 +146,13 @@ void Scene::Render() {
   glBlitFramebuffer(0, 0, width, height,
                     2 * width/3, 0, width, height/3,
                     GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+  // Draw ambient buffer in middle right
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, ambient_->ambient_fbo());
+  glReadBuffer(ambient_->ambient_buffer());
+  glBlitFramebuffer(0, 0, width, height,
+                    2 * width / 3, height/3, width, 2 * height / 3,
+                    GL_COLOR_BUFFER_BIT, GL_LINEAR);
 
   // Draw light buffer in top left
   glBindFramebuffer(GL_READ_FRAMEBUFFER, lighting_->fbo());

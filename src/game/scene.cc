@@ -1,5 +1,6 @@
 #include "game/scene.h"
 #include "mat/solid_material.h"
+#include "mat/textured_material.h"
 #include "util/toytga.h"
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -31,22 +32,38 @@ Scene::Scene(int width, int height)
   );
   meshes_.push_back(std::move(bunny));
 
+  auto wall = geo::Mesh::FromOBJ("model/wall.obj");
+  wall->set_transform(
+      glm::translate(glm::mat4(), glm::vec3(0.0, 1.5, 2.5)) *
+      glm::scale(glm::mat4(), glm::vec3(3.0, 3.0, 3.0)));
+  textured_meshes_.push_back(std::move(wall));
+
   util::TGA::Descriptor pepper;
-  if (util::TGA::LoadTGA("tex/pepper-raw.tga", pepper)) {
-    printf("successfully loaded testing TGA.\n");
+  if (util::TGA::LoadTGA("tex/ad.tga", pepper)) {
+    // XXX: assume power of two texture size and rgb.
+    assert(pepper.format == util::TGA::Descriptor::TGA_RGB24);
+    GLuint pepper_tex;
+    glGenTextures(1, &pepper_tex);
+    glBindTexture(GL_TEXTURE_2D, pepper_tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pepper.width, pepper.height, 0,
+                 GL_RGB, GL_UNSIGNED_BYTE, pepper.data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    pepper_tex_ = pepper_tex;
+    free(pepper.data);
   }
 }
 
 void Scene::Update(float dt) {
   // XXX: demo
   const float rot_speed = 1.2; // rotational speed in radians
-  const float rot_dist = 5.0;
-  const float rot_y = 3.0;
+  const float rot_dist = 1.0;
+  const float base_z = -5.0;
+  const float base_y = 2.0;
   rot = rot + (dt * rot_speed);
   float x = rot_dist * cos(rot);
   float z = rot_dist * sin(rot);
 
-  camera_.LookAt({ x, rot_y, z }, { 0.0, 0.0, 0.0 }, { 0.0, 1.0, 0.0 });
+  camera_.LookAt({ x, base_y, z + base_z }, { 0.0, 1.0, 0.0 }, { 0.0, 1.0, 0.0 });
 }
 
 void Scene::Render() {
@@ -69,12 +86,17 @@ void Scene::Render() {
 
   geom_->Clear();
   // FIXME: render with basic material for now.
-  mat::SolidMaterial basicMaterial;
-  StubMaterialIterator iter(&basicMaterial, meshes_);
+  mat::SolidMaterial solidMaterial;
+  StubMaterialIterator iter(&solidMaterial, meshes_);
   geom_->Render(camera_, iter);
 
+  // FIXME: demo.
+  mat::TexturedMaterial texturedMaterial(GL_TEXTURE_2D, pepper_tex_);
+  StubMaterialIterator texIter(&texturedMaterial, textured_meshes_);
+  geom_->Render(camera_, texIter);
+
   pipe::PointLight light1 = {1.0f, 8.0f, glm::vec3(0, 4.f, 1.5f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
-  pipe::PointLight light2 = {1.0f, 20.0f, glm::vec3(-5.f, 2.f, 1.5f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f)};
+  pipe::PointLight light2 = {1.0f, 4.0f, glm::vec3(0.f, 2.f, -2.5f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
   lighting_->Clear();
   lighting_->Illuminate(camera_, light1);
   //lighting_->Illuminate(camera_, light2);

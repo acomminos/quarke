@@ -29,6 +29,7 @@ class Scene {
  private:
   Camera camera_;
   float rot; // tmp
+  GLuint pepper_tex_; // tmp
 
   // TODO: should we put the pipeline here?
   std::unique_ptr<pipe::GeometryStage> geom_;
@@ -37,6 +38,7 @@ class Scene {
   typedef std::list<std::unique_ptr<geo::Mesh>> MeshPtrVector;
 
   MeshPtrVector meshes_;
+  MeshPtrVector textured_meshes_;
 
   // TODO: A temporary material iterator until we have different material types implemented.
   class StubMaterialIterator : public pipe::MaterialIterator,

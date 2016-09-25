@@ -40,7 +40,7 @@ void TexturedMaterial::BuildFragmentShader(std::ostream& fs) const {
 void TexturedMaterial::OnBindProgram(GLuint program) {
   if (texture_location_ == -1) {
     texture_location_ = glGetUniformLocation(program, "tex");
-    glUniform1f(texture_location_, TEXTURE_SLOT);
+    glUniform1i(texture_location_, TEXTURE_SLOT);
   }
 }
 

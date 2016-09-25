@@ -43,8 +43,9 @@ bool LoadTGA(const char* path, Descriptor& out_descriptor) {
     return false;
   }
 
+  bool rle = header.image_type == IMAGE_TYPE_COMPRESSED_TRUE_COLOR;
   uint8_t depth = header.depth;
-  if (depth != 24 || depth != 32) {
+  if (depth != 24 && depth != 32) {
     std::cerr << "[tga] Unsupported depth " << header.depth << std::endl;
     file.close();
     return false;
@@ -65,25 +66,51 @@ bool LoadTGA(const char* path, Descriptor& out_descriptor) {
   // for our impl's supported formats).
   file.seekg(header.id_len, std::fstream::cur);
 
-  int offset = 0;
-  while (offset < length) {
-    char pcount;
-    file.get(pcount);
-
-    int num_pixels = pcount & 0x7F;
-    // Upper bit is always set to 1 for RLE.
-    if (pcount & 0x80) {
-      char val[pixel_size];
-      file.read(val, pixel_size);
-      for (int i = 0; i < num_pixels; i++) {
-        // assume little endian.
-        memcpy(data + offset, val, pixel_size);
-        offset += pixel_size;
+  bool error = false;
+  if (rle) {
+    int offset = 0;
+    while (offset < length) {
+      char pcount;
+      if (!file.get(pcount)) {
+        std::cerr << "[tga] Failed to read packet pixel count." << std::endl;
+        error = true;
+        break;
       }
-    } else {
-      file.read(data + offset, num_pixels * pixel_size);
-      offset += num_pixels * pixel_size;
+
+      int num_pixels = (pcount & 0x7F) + 1; // repeat count is minimally 1
+      // Upper bit is always set to 1 for RLE.
+      if (pcount & 0x80) {
+        char val[pixel_size];
+        if (!file.read(val, pixel_size)) {
+          std::cerr << "[tga] Failed to read pixel data." << std::endl;
+          error = true;
+          break;
+        }
+        for (int i = 0; i < num_pixels; i++) {
+          // assume little endian.
+          memcpy(data + offset, val, pixel_size);
+          offset += pixel_size;
+        }
+      } else {
+        if (!file.read(data + offset, num_pixels * pixel_size)) {
+          std::cerr << "[tga] Failed to read pixel data." << std::endl;
+          error = true;
+          break;
+        }
+        offset += num_pixels * pixel_size;
+      }
     }
+  } else {
+    if (!file.read(data, length)) {
+      std::cerr << "[tga] Failed to read raw pixel data." << std::endl;
+      error = true;
+    }
+  }
+
+  if (error) {
+    free(data);
+    file.close();
+    return false;
   }
 
   out_descriptor.data = data;

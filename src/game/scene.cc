@@ -32,7 +32,7 @@ Scene::Scene(int width, int height)
   meshes_.push_back(std::move(bunny));
 
   util::TGA::Descriptor pepper;
-  if (util::TGA::LoadTGA("tex/pepper-rle.tga", pepper)) {
+  if (util::TGA::LoadTGA("tex/pepper-raw.tga", pepper)) {
     printf("successfully loaded testing TGA.\n");
   }
 }

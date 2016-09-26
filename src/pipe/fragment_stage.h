@@ -7,7 +7,6 @@
 #include <vector>
 
 namespace quarke {
-
 namespace pipe {
 
 // A generic shader stage that produces output textures in screen space.

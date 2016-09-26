@@ -33,6 +33,7 @@ class Scene {
   GLuint pepper_tex_; // tmp
 
   // TODO: should we put the pipeline here?
+  //       or move into separate pipeline class?
   std::unique_ptr<pipe::GeometryStage> geom_;
   std::unique_ptr<pipe::AmbientStage> ambient_;
   std::unique_ptr<pipe::PhongStage> lighting_;
@@ -75,6 +76,81 @@ class Scene {
     MeshPtrVector::const_iterator mesh_iter_;
     bool iterated_;
   };
+};
+
+// A continuous linked list of meshes separated by material.
+// Materials are not owned by the mesh collection, and are expected to be
+// valid for the lifetime of the collection.
+class LinkedMeshCollection {
+ public:
+  struct MaterialNode;
+  struct MeshNode {
+    std::unique_ptr<geo::Mesh> mesh;
+    std::unique_ptr<MeshNode> next;
+    MaterialNode* material;
+  };
+
+  struct MaterialNode {
+    mat::Material* material;
+    MeshNode* start;
+    MeshNode* end;
+    std::unique_ptr<MaterialNode> next;
+  };
+
+  class MaterialMeshIterator : public pipe::MaterialMeshIterator {
+   public:
+    MaterialMeshIterator(MaterialNode* node)
+      : node_(node) {}
+
+    const geo::Mesh* Next() override {
+      // Iterate until the material changes.
+      // We assume meshes of the same material are contiguous.
+      if (!next_ || next_ == node_->end)
+        return nullptr;
+      assert(next_->material == node_);
+
+      auto mesh = next_;
+      next_ = next_->next.get();
+      return mesh->mesh.get();
+    }
+
+    mat::Material* Material() override {
+      return node_->material;
+    }
+   private:
+    MaterialNode* node_;
+    MeshNode* next_;
+  };
+
+  class MaterialIterator : public pipe::MaterialIterator {
+   public:
+    MaterialIterator(MaterialNode* next) : next_(next), cur_iter_(nullptr) {}
+    pipe::MaterialMeshIterator* NextMaterial() override {
+      if (!next_)
+        return nullptr;
+      auto next = next_;
+      next_ = next_->next.get();
+      cur_iter_ = MaterialMeshIterator(next);
+      return &cur_iter_;
+    }
+   private:
+    MaterialNode* next_;
+    MaterialMeshIterator cur_iter_;
+  };
+
+  LinkedMeshCollection() : meshes_(nullptr), materials_(nullptr) {}
+
+  void AddMesh(mat::Material* mat, std::unique_ptr<geo::Mesh> mesh);
+
+  MaterialIterator Iterator();
+ private:
+
+  // Gets the material node for the given material, or inserts a new material
+  // node to the beginning of the material node list.
+  MaterialNode* GetOrCreateMaterial(mat::Material* material);
+
+  std::unique_ptr<MeshNode> meshes_;
+  std::unique_ptr<MaterialNode> materials_;
 };
 
 }  // namespace game

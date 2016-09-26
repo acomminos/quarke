@@ -17,7 +17,7 @@ Scene::Scene(int width, int height)
   meshes_.push_back(std::move(armadillo));
 
   auto terrain = geo::Mesh::FromOBJ("model/terrain.obj");
-  terrain->set_color(glm::vec4(0.1, 0.1, 0.1, 1.0));
+  terrain->set_color(glm::vec4(0.8, 0.8, 0.8, 1.0));
   terrain->set_transform(
       glm::translate(glm::mat4(), glm::vec3(0.0, -1.0, 0.0)) *
       glm::scale(terrain->transform(), glm::vec3(200.0, 1.0, 200.0)));
@@ -152,7 +152,7 @@ void Scene::Render() {
   glReadBuffer(ambient_->ambient_buffer());
   glBlitFramebuffer(0, 0, width, height,
                     2 * width / 3, height/3, width, 2 * height / 3,
-                    GL_COLOR_BUFFER_BIT, GL_LINEAR);
+                    GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
   // Draw light buffer in top left
   glBindFramebuffer(GL_READ_FRAMEBUFFER, lighting_->fbo());
@@ -168,6 +168,53 @@ void Scene::OnResize(int width, int height) {
   camera_.SetViewport(width, height);
   if (lighting_)
     lighting_->Resize(width, height);
+}
+
+// TODO: move this to another file.
+
+void LinkedMeshCollection::AddMesh(mat::Material* mat,
+                                   std::unique_ptr<geo::Mesh> mesh) {
+  auto node = GetOrCreateMaterial(mat);
+  auto mesh_node = std::make_unique<LinkedMeshCollection::MeshNode>();
+  mesh_node->mesh = std::move(mesh);
+  mesh_node->next = nullptr;
+  mesh_node->material = node;
+
+  MeshNode* ptr = mesh_node.get();
+  if (node->end) {
+    assert(node->start);
+    node->end->next = std::move(mesh_node);
+    node->end = ptr;
+  } else {
+    assert(!node->start);
+    // This must be a new material.
+    node->start = ptr;
+    node->end = ptr;
+    mesh_node->next = std::move(meshes_);
+    meshes_ = std::move(mesh_node);
+  }
+}
+
+LinkedMeshCollection::MaterialIterator
+LinkedMeshCollection::Iterator() {
+  return MaterialIterator(materials_.get());
+}
+
+LinkedMeshCollection::MaterialNode*
+LinkedMeshCollection::GetOrCreateMaterial(mat::Material* mat) {
+  MaterialNode* node = materials_.get();
+  while (node) {
+    if (node->material == mat)
+      return node;
+    node = node->next.get();
+  }
+  auto new_node = std::make_unique<LinkedMeshCollection::MaterialNode>();
+  new_node->material = mat;
+  new_node->start = nullptr;
+  new_node->end = nullptr;
+  new_node->next = std::move(materials_);
+  materials_ = std::move(new_node);
+  return new_node.get();
 }
 
 }  // namespace game

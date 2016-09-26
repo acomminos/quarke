@@ -9,6 +9,7 @@ set(QUARKE_SOURCES
     pipe/geometry_stage.cc
     pipe/phong_stage.cc
     pipe/ambient_stage.cc
+    pipe/omni_shadow_stage.cc
     mat/solid_material.cc
     mat/textured_material.cc
     geo/mesh.cc

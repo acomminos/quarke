@@ -57,7 +57,7 @@ std::unique_ptr<FragmentStage> FragmentStage::Create(int width, int height,
   GLuint depth_tex;
   glGenTextures(1, &depth_tex);
   glBindTexture(GL_TEXTURE_RECTANGLE, depth_tex);
-  glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH_COMPONENT, width, height, 0,
+  glTexImage2D(GL_TEXTURE_RECTANGLE, 0, depth_format(), width, height, 0,
                GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
   glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth_tex, 0);
 
@@ -88,16 +88,16 @@ std::unique_ptr<FragmentStage> FragmentStage::Create(int width, int height,
                         sizeof(GLfloat) * 2, nullptr);
 
   return std::make_unique<FragmentStage>(width, height, program, fbo, textures,
-                                         buffers, num_outputs,
+                                         buffers, num_outputs, depth_tex,
                                          screen_vbo, screen_vao);
 }
 
 FragmentStage::FragmentStage(int width, int height, GLuint program, GLuint fbo,
                              std::vector<GLuint> textures, std::vector<GLenum> buffers,
-                             GLsizei num_outputs, GLuint vbo, GLuint vao)
+                             GLsizei num_outputs, GLuint depth_tex, GLuint vbo, GLuint vao)
   : out_width_(width), out_height_(height), program_(program), fbo_(fbo)
   , textures_(textures), buffers_(buffers), num_outputs_(num_outputs)
-  , vbo_(vbo), vao_(vao) {
+  , depth_tex_(depth_tex), vbo_(vbo), vao_(vao) {
 }
 
 FragmentStage::~FragmentStage() {

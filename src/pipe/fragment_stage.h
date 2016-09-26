@@ -20,7 +20,7 @@ class FragmentStage {
 
   FragmentStage(int width, int height, GLuint program, GLuint fbo,
                 std::vector<GLuint> textures, std::vector<GLenum> buffers,
-                GLsizei num_outputs, GLuint vbo, GLuint vao);
+                GLsizei num_outputs, GLuint depth_tex, GLuint vbo, GLuint vao);
   ~FragmentStage();
 
   // Resizes the light buffer to the given dimensions.
@@ -38,7 +38,9 @@ class FragmentStage {
     assert(idx >= 0 && idx < GL_MAX_COLOR_ATTACHMENTS);
     return textures_[idx];
   }
+  GLuint depth_tex() { return depth_tex_; }
   static GLuint format() { return GL_RGBA32F; }
+  static GLuint depth_format() { return GL_DEPTH_COMPONENT; }
 
  private:
   static bool BuildShaderProgram(GLuint& out_program, const char* fs_source);
@@ -50,6 +52,7 @@ class FragmentStage {
   std::vector<GLenum> buffers_;
   GLsizei num_outputs_;
 
+  const GLuint depth_tex_;
   const GLuint program_;
   const GLuint fbo_;
   const GLuint vbo_;

@@ -12,6 +12,7 @@ set(QUARKE_SOURCES
     mat/solid_material.cc
     mat/textured_material.cc
     geo/mesh.cc
+    geo/linked_mesh_collection.cc
     game/camera.cc
     game/game.cc
     game/scene.cc

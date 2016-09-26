@@ -10,18 +10,36 @@ namespace game {
 Scene::Scene(int width, int height)
   : camera_(width, height)
   , rot(0) {
-  // XXX: testing
-  //meshes_.push_back(geo::Mesh::FromOBJ("model/teapot.obj"));
+
+  solid_material_ = std::make_unique<mat::SolidMaterial>();
+
+  util::TGA::Descriptor pepper;
+  assert(util::TGA::LoadTGA("tex/ad.tga", pepper));
+  // XXX: assume power of two texture size and rgb.
+  assert(pepper.format == util::TGA::Descriptor::TGA_RGB24);
+  GLuint pepper_tex;
+  glGenTextures(1, &pepper_tex);
+  glBindTexture(GL_TEXTURE_2D, pepper_tex);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pepper.width, pepper.height, 0,
+      GL_RGB, GL_UNSIGNED_BYTE, pepper.data);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_BLUE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_RED);
+  glGenerateMipmap(GL_TEXTURE_2D);
+  pepper_tex_ = pepper_tex;
+  free(pepper.data);
+  textured_material_ = std::make_unique<mat::TexturedMaterial>(GL_TEXTURE_2D, pepper_tex_);
+
+  // XXX: Load some demo data.
   auto armadillo = geo::Mesh::FromOBJ("model/armadillo.obj");
   armadillo->set_color(glm::vec4(0.2, 0.6, 0.2, 1.0));
-  meshes_.push_back(std::move(armadillo));
+  meshes_.AddMesh(solid_material_.get(), std::move(armadillo));
 
   auto terrain = geo::Mesh::FromOBJ("model/terrain.obj");
   terrain->set_color(glm::vec4(0.8, 0.8, 0.8, 1.0));
   terrain->set_transform(
       glm::translate(glm::mat4(), glm::vec3(0.0, -1.0, 0.0)) *
       glm::scale(terrain->transform(), glm::vec3(200.0, 1.0, 200.0)));
-  meshes_.push_back(std::move(terrain));
+  meshes_.AddMesh(solid_material_.get(), std::move(terrain));
 
   auto bunny = geo::Mesh::FromOBJ("model/bunny.obj");
   bunny->set_color(glm::vec4(0.8, 0.8, 0.8, 1.0));
@@ -30,29 +48,13 @@ Scene::Scene(int width, int height)
       glm::rotate(glm::mat4(), 180.f, glm::vec3(0.0, 1.0, 0.0)) *
       glm::scale(glm::mat4(), glm::vec3(0.25, 0.25, 0.25))
   );
-  meshes_.push_back(std::move(bunny));
+  meshes_.AddMesh(solid_material_.get(), std::move(bunny));
 
   auto wall = geo::Mesh::FromOBJ("model/wall.obj");
   wall->set_transform(
       glm::translate(glm::mat4(), glm::vec3(0.0, 1.5, 2.5)) *
       glm::scale(glm::mat4(), glm::vec3(3.0, 3.0, 3.0)));
-  textured_meshes_.push_back(std::move(wall));
-
-  util::TGA::Descriptor pepper;
-  if (util::TGA::LoadTGA("tex/ad.tga", pepper)) {
-    // XXX: assume power of two texture size and rgb.
-    assert(pepper.format == util::TGA::Descriptor::TGA_RGB24);
-    GLuint pepper_tex;
-    glGenTextures(1, &pepper_tex);
-    glBindTexture(GL_TEXTURE_2D, pepper_tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, pepper.width, pepper.height, 0,
-                 GL_RGB, GL_UNSIGNED_BYTE, pepper.data);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_BLUE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_RED);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    pepper_tex_ = pepper_tex;
-    free(pepper.data);
-  }
+  meshes_.AddMesh(textured_material_.get(), std::move(wall));
 }
 
 void Scene::Update(float dt) {
@@ -93,16 +95,9 @@ void Scene::Render() {
     assert(lighting_);
   }
 
+  auto mesh_iter = meshes_.Iterator();
   geom_->Clear();
-  // FIXME: render with basic material for now.
-  mat::SolidMaterial solidMaterial;
-  StubMaterialIterator iter(&solidMaterial, meshes_);
-  geom_->Render(camera_, iter);
-
-  // FIXME: demo.
-  mat::TexturedMaterial texturedMaterial(GL_TEXTURE_2D, pepper_tex_);
-  StubMaterialIterator texIter(&texturedMaterial, textured_meshes_);
-  geom_->Render(camera_, texIter);
+  geom_->Render(camera_, mesh_iter);
 
   ambient_->Clear();
   ambient_->Render(geom_->color_tex());
@@ -168,53 +163,6 @@ void Scene::OnResize(int width, int height) {
   camera_.SetViewport(width, height);
   if (lighting_)
     lighting_->Resize(width, height);
-}
-
-// TODO: move this to another file.
-
-void LinkedMeshCollection::AddMesh(mat::Material* mat,
-                                   std::unique_ptr<geo::Mesh> mesh) {
-  auto node = GetOrCreateMaterial(mat);
-  auto mesh_node = std::make_unique<LinkedMeshCollection::MeshNode>();
-  mesh_node->mesh = std::move(mesh);
-  mesh_node->next = nullptr;
-  mesh_node->material = node;
-
-  MeshNode* ptr = mesh_node.get();
-  if (node->end) {
-    assert(node->start);
-    node->end->next = std::move(mesh_node);
-    node->end = ptr;
-  } else {
-    assert(!node->start);
-    // This must be a new material.
-    node->start = ptr;
-    node->end = ptr;
-    mesh_node->next = std::move(meshes_);
-    meshes_ = std::move(mesh_node);
-  }
-}
-
-LinkedMeshCollection::MaterialIterator
-LinkedMeshCollection::Iterator() {
-  return MaterialIterator(materials_.get());
-}
-
-LinkedMeshCollection::MaterialNode*
-LinkedMeshCollection::GetOrCreateMaterial(mat::Material* mat) {
-  MaterialNode* node = materials_.get();
-  while (node) {
-    if (node->material == mat)
-      return node;
-    node = node->next.get();
-  }
-  auto new_node = std::make_unique<LinkedMeshCollection::MaterialNode>();
-  new_node->material = mat;
-  new_node->start = nullptr;
-  new_node->end = nullptr;
-  new_node->next = std::move(materials_);
-  materials_ = std::move(new_node);
-  return new_node.get();
 }
 
 }  // namespace game

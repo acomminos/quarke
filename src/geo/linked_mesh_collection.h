@@ -54,7 +54,7 @@ class LinkedMeshCollection {
 
   class MaterialIterator : public pipe::MaterialIterator {
    public:
-    MaterialIterator(MaterialNode* next) : next_(next), cur_iter_(nullptr) {}
+    MaterialIterator(MaterialNode* start) : start_(start), next_(start), cur_iter_(nullptr) {}
     pipe::MaterialMeshIterator* NextMaterial() override {
       if (!next_)
         return nullptr;
@@ -62,7 +62,12 @@ class LinkedMeshCollection {
       next_ = next_->next.get();
       return &cur_iter_;
     }
+
+    void Reset() override {
+      next_ = start_;
+    }
    private:
+    MaterialNode* start_;
     MaterialNode* next_;
     MaterialMeshIterator cur_iter_;
   };

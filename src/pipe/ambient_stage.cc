@@ -45,7 +45,7 @@ void AmbientStage::Render(GLuint albedo_tex) {
   glUseProgram(fstage_->program());
   glUniform1i(albedo_location_, 0);
   glActiveTexture(GL_TEXTURE0 + TEX_UNIT);
-  glBindTexture(GL_TEXTURE_2D, albedo_tex);
+  glBindTexture(GL_TEXTURE_RECTANGLE, albedo_tex);
   glUniform4fv(ambient_color_location_, 1, glm::value_ptr(ambient_color_));
   fstage_->Draw();
 }

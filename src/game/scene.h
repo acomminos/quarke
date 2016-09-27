@@ -11,6 +11,7 @@
 #include "pipe/ambient_stage.h"
 #include "pipe/geometry_stage.h"
 #include "pipe/phong_stage.h"
+#include "pipe/omni_shadow_stage.h"
 #include "geo/linked_mesh_collection.h"
 
 namespace quarke {
@@ -33,12 +34,14 @@ class Scene {
   Camera camera_;
   float rot; // tmp
   GLuint pepper_tex_; // tmp
+  std::vector<pipe::PointLight> point_lights_;
 
   // TODO: should we put the pipeline here?
   //       or move into separate pipeline class?
   std::unique_ptr<pipe::GeometryStage> geom_;
   std::unique_ptr<pipe::AmbientStage> ambient_;
   std::unique_ptr<pipe::PhongStage> lighting_;
+  std::unique_ptr<pipe::OmniShadowStage> omni_shadow_;
 
   geo::LinkedMeshCollection meshes_;
 

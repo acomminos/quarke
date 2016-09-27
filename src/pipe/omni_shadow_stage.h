@@ -15,12 +15,12 @@ class OmniShadowStage {
  public:
   // texture_size must be a power of two.
   static std::unique_ptr<OmniShadowStage> Create(GLsizei texture_size);
-  OmniShadowStage(GLuint program, GLuint fbo, GLuint textures[6],
-                  GLuint cube_texture, GLsizei texture_size);
+  OmniShadowStage(GLuint program, GLuint fbo, GLuint cube_texture,
+                  GLsizei texture_size);
 
   // Constructs a cube shadow map at the given light position in world space.
   // Each shadow stage stores 6 textures.
-  void BuildShadowMap(const glm::vec3 position);
+  void BuildShadowMap(const glm::vec3 position, MaterialIterator& iter);
 
   // Sets the size of each dimension of the cubemapped textures.
   // `size` must be a power of two.
@@ -28,7 +28,12 @@ class OmniShadowStage {
 
   static GLenum depth_format() { return GL_DEPTH_COMPONENT; }
  private:
-  void RenderFace(GLenum face, const glm::vec3 position);
+  // Called to render a face of the cube map.
+  // Assumes:
+  // - program_ is the current program.
+  // - fbo_ is the bound framebuffer.
+  // - cube_texture_ is bound to GL_TEXTURE_CUBE_MAP.
+  void RenderFace(GLenum face, const glm::vec3 position, MaterialIterator& iter);
 
   static GLenum depth_internal_format() { return GL_DEPTH_COMPONENT; }
 
@@ -36,9 +41,6 @@ class OmniShadowStage {
   const GLuint fbo_;
   GLuint uniform_transform_;
 
-  // Depth textures mapping to each side of the cube map.
-  // Ordered from +X to -Z, {X, Y, Z} alternating +/-.
-  GLuint textures_[6];
   const GLuint cube_texture_;
   GLsizei texture_size_;
 };

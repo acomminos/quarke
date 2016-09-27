@@ -55,6 +55,8 @@ Scene::Scene(int width, int height)
       glm::translate(glm::mat4(), glm::vec3(0.0, 1.5, 2.5)) *
       glm::scale(glm::mat4(), glm::vec3(3.0, 3.0, 3.0)));
   meshes_.AddMesh(textured_material_.get(), std::move(wall));
+
+  point_lights_.push_back({1.0f, 8.0f, glm::vec3(0, 4.f, 1.5f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)});
 }
 
 void Scene::Update(float dt) {
@@ -95,6 +97,12 @@ void Scene::Render() {
     assert(lighting_);
   }
 
+  if (!omni_shadow_) {
+    const GLsizei TEXTURE_RESOLUTION = 1024;
+    omni_shadow_ = pipe::OmniShadowStage::Create(TEXTURE_RESOLUTION);
+    assert(omni_shadow_);
+  }
+
   auto mesh_iter = meshes_.Iterator();
   geom_->Clear();
   geom_->Render(camera_, mesh_iter);
@@ -115,10 +123,11 @@ void Scene::Render() {
   glDrawBuffers(1, dbuffers);
   glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
-  pipe::PointLight light1 = {1.0f, 8.0f, glm::vec3(0, 4.f, 1.5f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
-  pipe::PointLight light2 = {1.0f, 4.0f, glm::vec3(0.f, 2.f, -2.5f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)};
-  lighting_->Illuminate(camera_, light1);
-  //lighting_->Illuminate(camera_, light2);
+  mesh_iter.Reset();
+  for (auto it = point_lights_.begin(); it != point_lights_.end(); it++) {
+    omni_shadow_->BuildShadowMap(it->position, mesh_iter);
+    lighting_->Illuminate(camera_, *it);
+  }
 
   // FIXME: this blit is the worst
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);

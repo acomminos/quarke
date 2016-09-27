@@ -40,6 +40,9 @@ class MaterialIterator {
     // Returns the next MaterialIterator and advances the iterator, or returns
     // nullptr if we're out of elements.
     virtual MaterialMeshIterator* NextMaterial() = 0;
+
+    // Resets the iterator, restarting iteration from the first material.
+    virtual void Reset() = 0;
 };
 
 // Produces a G-buffer containing color, texture, depth, and normal data.

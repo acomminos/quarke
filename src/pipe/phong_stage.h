@@ -27,19 +27,21 @@ class PhongStage {
   // Creates a new phong stage based on color, normal, position, and depth buffers.
   static std::unique_ptr<PhongStage> Create(int width, int height,
                                             GLuint color_tex, GLuint normal_tex,
-                                            GLuint position_tex);
+                                            GLuint position_tex, GLuint depth_tex);
 
   // Instantiates a phong stage drawing to a light buffer.
   PhongStage(int width, int height, GLuint program,
              GLuint light_fbo, GLuint light_buffer,
-             GLuint light_tex, GLuint screen_vbo, GLuint screen_vao,
-             GLuint color_tex, GLuint normal_tex, GLuint position_tex,
-             GLuint depth_tex);
+             GLuint light_tex, GLuint light_depth_tex, GLuint screen_vbo,
+             GLuint screen_vao, GLuint color_tex, GLuint normal_tex,
+             GLuint position_tex, GLuint depth_tex);
 
   void Clear();
 
   // Accumulates the given point light's luminosity to the light buffer.
-  void Illuminate(const game::Camera& camera, const PointLight& light);
+  // FIXME: remove hackish shadow map thrown in; migrate to its own stage?
+  void Illuminate(const game::Camera& camera, const PointLight& light,
+                  GLuint shadow_cubemap);
 
   // Resizes the light buffer to the given dimensions.
   // Implicitly clears the light buffer.
@@ -61,6 +63,7 @@ class PhongStage {
   const GLuint light_fbo_;
   const GLuint light_buffer_;
   const GLuint light_tex_;
+  const GLuint light_depth_tex_;
   const GLuint screen_vbo_;
   const GLuint screen_vao_;
 
@@ -72,10 +75,12 @@ class PhongStage {
   GLuint color_sampler_location_;
   GLuint normal_sampler_location_;
   GLuint position_sampler_location_;
+  GLuint depth_sampler_location_;
   GLuint eye_position_location_;
   GLuint light_position_location_;
   GLuint light_color_location_;
   GLuint light_distance_location_;
+  GLuint shadow_sampler_location_;
 };
 
 }  // namespace pipe

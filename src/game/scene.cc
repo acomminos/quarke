@@ -56,20 +56,20 @@ Scene::Scene(int width, int height)
       glm::scale(glm::mat4(), glm::vec3(3.0, 3.0, 3.0)));
   meshes_.AddMesh(textured_material_.get(), std::move(wall));
 
-  point_lights_.push_back({1.0f, 8.0f, glm::vec3(0, 4.f, 1.5f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)});
+  point_lights_.push_back({1.0f, 15.0f, glm::vec3(0.f, 5.f, 0.f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)});
 }
 
 void Scene::Update(float dt) {
   // XXX: demo
   const float rot_speed = 1.2; // rotational speed in radians
-  const float rot_dist = 1.0;
-  const float base_z = -5.0;
-  const float base_y = 2.0;
+  const float rot_dist = 5.0;
+  const float base_z = -10.0;
+  const float base_y = 5.0;
   rot = rot + (dt * rot_speed);
   float x = rot_dist * cos(rot);
   float z = rot_dist * sin(rot);
 
-  camera_.LookAt({ x, base_y, z + base_z }, { 0.0, 1.0, 0.0 }, { 0.0, 1.0, 0.0 });
+  camera_.LookAt({ x, base_y, z + base_z }, { 0.0, 2.0, 0.0 }, { 0.0, 1.0, 0.0 });
 }
 
 void Scene::Render() {
@@ -93,7 +93,8 @@ void Scene::Render() {
                                          camera_.viewport_height(),
                                          geom_->color_tex(),
                                          geom_->normal_tex(),
-                                         geom_->position_tex());
+                                         geom_->position_tex(),
+                                         geom_->depth_tex());
     assert(lighting_);
   }
 
@@ -126,7 +127,7 @@ void Scene::Render() {
   mesh_iter.Reset();
   for (auto it = point_lights_.begin(); it != point_lights_.end(); it++) {
     omni_shadow_->BuildShadowMap(it->position, mesh_iter);
-    lighting_->Illuminate(camera_, *it);
+    lighting_->Illuminate(camera_, *it, omni_shadow_->cube_texture());
   }
 
   // FIXME: this blit is the worst

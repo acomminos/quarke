@@ -127,6 +127,7 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter,
 
   MaterialMeshIterator* mit = nullptr;
   while ((mit = iter.NextMaterial()) != nullptr) {
+    // FIXME: should we be using a pointer to index materials?
     mat::Material* mat = mit->Material();
     auto cache_it = shader_cache_.find(mat);
     GLuint program;
@@ -157,16 +158,6 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter,
 
     const geo::Mesh* mesh = nullptr;
     while ((mesh = mit->Next()) != nullptr) {
-      // TODO: assert that mesh::material == material here
-
-      // Here's the floorplan here;
-      // - bind vertex attributes
-      // - apply per-model transform
-      // - do we have any per-model uniforms? if so, major league swagout.
-
-      // I guess we could sort of use a pointer to a material as an
-      // identifier (as disappointing as that is)
-
       geo::VertexBuffer& vb = mesh->array_buffer();
       glBindVertexArray(vb.vertex_array());
 

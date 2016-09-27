@@ -18,7 +18,7 @@ static const GLfloat SCREEN_VERTICES[] = {
 static const GLuint VS_IN_POSITION_LOCATION = 0;
 
 static const char* PHONG_POINT_VS = R"(
-#version 330
+#version 330 core
 
 layout(location = 0) in vec2 position;
 
@@ -28,19 +28,26 @@ void main(void) {
 )";
 
 static const char* PHONG_POINT_FS = R"(
-#version 330
+#version 330 core
 
 uniform sampler2DRect colorSampler;
 uniform sampler2DRect normalSampler;
 uniform sampler2DRect positionSampler;
+uniform sampler2DRect depthSampler;
 
 uniform vec3 eye;
 uniform vec3 lightPosition;
 uniform vec4 lightColor;
 uniform float lightDistance;
 
+// omni-directional cube shadow map
+uniform samplerCube shadowSamplerCube;
+
 // TODO: implement this per-material. perhaps a specular buffer?
-const float specularPower = 10.0;
+const float specularPower = 5.0;
+
+// amount of depth buffer variance that's acceptable to reject within
+const float shadowMapEpsilon = 0.01;
 
 out vec4 outLight;
 
@@ -48,32 +55,30 @@ void main(void) {
   vec4 albedo = texture(colorSampler, gl_FragCoord.xy);
   vec3 normal = texture(normalSampler, gl_FragCoord.xy).xyz;
   vec3 pos = texture(positionSampler, gl_FragCoord.xy).xyz;
+  float depth = texture(depthSampler, gl_FragCoord.xy).r;
+
+  // shadow mapping
+  float shadowDepth = texture(shadowSamplerCube, (pos - lightPosition)).r;
+  float shadowIntensity = 0.0;
+  if (abs(shadowDepth - depth) < shadowMapEpsilon) {
+    shadowIntensity = 1.0;
+  }
 
   vec3 d = normalize(lightPosition - pos);
-  float dIntensity = dot(d, normal);
-  vec4 diffuseColor;
-  if (dIntensity > 0.0) {
-    diffuseColor = albedo * lightColor * dIntensity;
-  } else {
-    diffuseColor = vec4(0.0, 0.0, 0.0, 0.0);
-  }
+  float dIntensity = max(dot(d, normal), 0.0);
+  vec4 diffuseColor = albedo * lightColor * dIntensity;
 
   vec3 dEye = normalize(eye - pos);
   vec3 half = normalize(dEye + d);
 
-  vec4 specularColor;
-  float sIntensity = dot(half, normal);
-  if (sIntensity > 0.0) {
-    specularColor = lightColor * pow(sIntensity, specularPower);
-  } else {
-    specularColor = vec4(0.0, 0.0, 0.0, 0.0);
-  }
+  float sIntensity = max(dot(half, normal), 0.0);
+  vec4 specularColor = lightColor * pow(sIntensity, specularPower);
 
   float dist = distance(pos, lightPosition);
   // Use a nonlinearity for falloff around the edges.
   float lightIntensity = max(1.0 - pow(dist/lightDistance, 2.0), 0.0);
 
-  outLight = lightIntensity * (diffuseColor + specularColor);
+  outLight = shadowIntensity * lightIntensity * (diffuseColor + specularColor);
 }
 )";
 
@@ -81,7 +86,8 @@ std::unique_ptr<PhongStage> PhongStage::Create(int width,
                                                int height,
                                                GLuint color_tex,
                                                GLuint normal_tex,
-                                               GLuint position_tex) {
+                                               GLuint position_tex,
+                                               GLuint depth_tex) {
   const GLenum LIGHT_BUFFER = GL_COLOR_ATTACHMENT0;
 
   GLuint fbo;
@@ -95,18 +101,18 @@ std::unique_ptr<PhongStage> PhongStage::Create(int width,
                GL_RGBA, GL_FLOAT, nullptr);
   glFramebufferTexture(GL_FRAMEBUFFER, LIGHT_BUFFER, light_tex, 0);
 
-  GLuint depth_tex;
-  glGenTextures(1, &depth_tex);
-  glBindTexture(GL_TEXTURE_RECTANGLE, depth_tex);
+  GLuint light_depth_tex;
+  glGenTextures(1, &light_depth_tex);
+  glBindTexture(GL_TEXTURE_RECTANGLE, light_depth_tex);
   glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH_COMPONENT, width, height, 0,
                GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-  glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth_tex, 0);
+  glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, light_depth_tex, 0);
 
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
     std::cerr << "[phong] Incomplete framebuffer." << std::endl;
     glDeleteFramebuffers(1, &fbo);
     glDeleteTextures(1, &light_tex);
-    glDeleteTextures(1, &depth_tex);
+    glDeleteTextures(1, &light_depth_tex);
     return nullptr;
   }
 
@@ -130,28 +136,32 @@ std::unique_ptr<PhongStage> PhongStage::Create(int width,
   // TODO: restore current VAO? may be called within context.
 
   return std::make_unique<PhongStage>(width, height, program, fbo,
-                                      LIGHT_BUFFER, light_tex, screen_vbo,
-                                      screen_vao, color_tex, normal_tex,
+                                      LIGHT_BUFFER, light_tex, light_depth_tex,
+                                      screen_vbo, screen_vao, color_tex, normal_tex,
                                       position_tex, depth_tex);
 }
 PhongStage::PhongStage(int width, int height, GLuint program,
                        GLuint light_fbo, GLuint light_buffer,
-                       GLuint light_tex, GLuint screen_vbo, GLuint screen_vao,
+                       GLuint light_tex, GLuint light_depth_tex,
+                       GLuint screen_vbo, GLuint screen_vao,
                        GLuint color_tex, GLuint normal_tex, GLuint position_tex,
                        GLuint depth_tex)
   : out_width_(width), out_height_(height), program_(program)
   , light_fbo_(light_fbo), light_buffer_(light_buffer), light_tex_(light_tex)
-  , screen_vbo_(screen_vbo), screen_vao_(screen_vao), color_tex_(color_tex)
-  , normal_tex_(normal_tex), position_tex_(position_tex), depth_tex_(depth_tex)
+  , light_depth_tex_(light_depth_tex), screen_vbo_(screen_vbo)
+  , screen_vao_(screen_vao), color_tex_(color_tex), normal_tex_(normal_tex)
+  , position_tex_(position_tex), depth_tex_(depth_tex)
 {
   // TODO: construct vs/fs using streams+consts so we don't have to have magic strings
   color_sampler_location_ = glGetUniformLocation(program, "colorSampler");
   normal_sampler_location_ = glGetUniformLocation(program, "normalSampler");
   position_sampler_location_ = glGetUniformLocation(program, "positionSampler");
+  depth_sampler_location_ = glGetUniformLocation(program, "depthSampler");
   eye_position_location_ = glGetUniformLocation(program, "eye");
   light_position_location_ = glGetUniformLocation(program, "lightPosition");
   light_color_location_ = glGetUniformLocation(program, "lightColor");
   light_distance_location_ = glGetUniformLocation(program, "lightDistance");
+  shadow_sampler_location_ = glGetUniformLocation(program, "shadowSamplerCube");
 }
 
 void PhongStage::Clear() {
@@ -161,7 +171,8 @@ void PhongStage::Clear() {
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void PhongStage::Illuminate(const game::Camera& camera, const PointLight& light) {
+void PhongStage::Illuminate(const game::Camera& camera, const PointLight& light,
+                            GLuint shadow_cubemap) {
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, light_fbo_);
   glDrawBuffers(1, (const GLenum*) &light_buffer_);
 
@@ -181,6 +192,14 @@ void PhongStage::Illuminate(const game::Camera& camera, const PointLight& light)
   glBindTexture(GL_TEXTURE_RECTANGLE, position_tex_);
   glUniform1i(position_sampler_location_, 2);
 
+  glActiveTexture(GL_TEXTURE3);
+  glBindTexture(GL_TEXTURE_RECTANGLE, depth_tex_);
+  glUniform1i(depth_sampler_location_, 3);
+
+  glActiveTexture(GL_TEXTURE4);
+  glBindTexture(GL_TEXTURE_CUBE_MAP, shadow_cubemap);
+  glUniform1i(shadow_sampler_location_, 4);
+
   glUniform3fv(eye_position_location_, 1, glm::value_ptr(camera.Position()));
   glUniform3fv(light_position_location_, 1, glm::value_ptr(light.position));
   glUniform4fv(light_color_location_, 1, glm::value_ptr(light.color));
@@ -192,6 +211,8 @@ void PhongStage::Illuminate(const game::Camera& camera, const PointLight& light)
 
   glDisable(GL_DEPTH_TEST);
   glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+  glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
 void PhongStage::Resize(int width, int height) {
@@ -200,6 +221,9 @@ void PhongStage::Resize(int width, int height) {
   glBindTexture(GL_TEXTURE_RECTANGLE, light_tex_);
   glTexImage2D(GL_TEXTURE_RECTANGLE, 0, format(), width, height, 0,
                GL_RGBA, GL_FLOAT, nullptr);
+  glBindTexture(GL_TEXTURE_RECTANGLE, light_depth_tex_);
+  glTexImage2D(GL_TEXTURE_RECTANGLE, 0, GL_DEPTH_COMPONENT, width, height, 0,
+               GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 }
 
 bool PhongStage::BuildShaderProgram(GLuint& out_program) {

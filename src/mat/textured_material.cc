@@ -50,5 +50,10 @@ void TexturedMaterial::PreDrawMesh(const geo::Mesh& mesh) {
   glBindTexture(target_, texture_);
 }
 
+void TexturedMaterial::PostDrawMesh(const geo::Mesh& mesh) {
+  // TODO: bind to mesh's assigned texture
+  glBindTexture(target_, 0);
+}
+
 }  // namespace mat
 }  // namespace quarke

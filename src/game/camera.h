@@ -11,7 +11,7 @@ namespace game {
 class Camera {
  public:
   Camera(int viewport_width, int viewport_height,
-         float fov = 45.0, float near = 0.1, float far = 1000.0);
+         float fov = 45.0, float near = 0.1, float far = 100.0);
 
   // Sets the camera's view matrix using a given eye location, target location,
   // and an up vector.

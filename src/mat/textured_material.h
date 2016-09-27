@@ -19,6 +19,7 @@ class TexturedMaterial : public Material {
 
   void OnBindProgram(GLuint program) override;
   void PreDrawMesh(const geo::Mesh& mesh) override;
+  void PostDrawMesh(const geo::Mesh& mesh) override;
  private:
   GLenum target_;
   GLuint texture_;

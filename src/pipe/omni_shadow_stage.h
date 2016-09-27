@@ -27,6 +27,7 @@ class OmniShadowStage {
   void SetTextureDimension(GLsizei size);
 
   static GLenum depth_format() { return GL_DEPTH_COMPONENT; }
+  GLuint cube_texture() { return cube_texture_; }
  private:
   // Called to render a face of the cube map.
   // Assumes:

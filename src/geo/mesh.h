@@ -28,24 +28,31 @@ enum VertexFormat {
 };
 
 // A lightweight wrapper around a GL vertex data buffer to be used for sharing
-// immutable buffers between meshes.
+// immutable buffers between meshes. It stores a VAO with attributes bound
+// according to the standard mesh attribute format.
 class VertexBuffer {
  public:
+  const static int VS_ATTRIB_POSITION = 0; // vs index of position vec3
+  const static int VS_ATTRIB_NORMAL   = 1; // vs index of normal vec3
+  const static int VS_ATTRIB_TEXCOORD = 2; // vs index of texcoord vec2
+
   // Creates a new GL buffer owned by this VertexBuffer.
   static std::shared_ptr<VertexBuffer> Create(VertexFormat format);
 
   // Wraps a vertex buffer, assuming ownership.
-  VertexBuffer(VertexFormat format, GLuint buffer);
+  VertexBuffer(VertexFormat format, GLuint buffer, GLuint vao);
   VertexBuffer(const VertexBuffer& buffer) = delete;
   VertexBuffer(VertexBuffer&& buffer) = delete;
   ~VertexBuffer();
 
   VertexFormat format() const { return format_; }
   GLuint buffer() const { return buffer_; }
+  GLuint vertex_array() const { return vao_; }
  private:
 
   VertexFormat format_;
   GLuint buffer_;
+  GLuint vao_;
 };
 
 // A mesh is simply an aggregation of triangle faces.

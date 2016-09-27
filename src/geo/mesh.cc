@@ -13,18 +13,57 @@ namespace geo {
 
 /* static */
 std::shared_ptr<VertexBuffer> VertexBuffer::Create(VertexFormat format) {
-  GLuint buffer;
+  GLuint buffer, vao;
   glGenBuffers(1, &buffer);
-  // TODO: should we error check here? don't think we can run out of vram.
-  return std::make_shared<VertexBuffer>(format, buffer);
+  glGenVertexArrays(1, &vao);
+  glBindVertexArray(vao);
+
+  switch (format) {
+    case VertexFormat::P3N3T2:
+      glEnableVertexAttribArray(VS_ATTRIB_POSITION);
+      glEnableVertexAttribArray(VS_ATTRIB_NORMAL);
+      glEnableVertexAttribArray(VS_ATTRIB_TEXCOORD);
+
+      glBindBuffer(GL_ARRAY_BUFFER, buffer);
+      glVertexAttribPointer(VS_ATTRIB_POSITION, 3,
+          GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3 + 2),
+          (void*)0);
+      glVertexAttribPointer(VS_ATTRIB_NORMAL, 3,
+          GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3 + 2),
+          (void*)(sizeof(GLfloat) * 3));
+      glVertexAttribPointer(VS_ATTRIB_TEXCOORD, 2,
+          GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3 + 2),
+          (void*)(sizeof(GLfloat) * (3 + 3)));
+      break;
+    case VertexFormat::P3N3:
+      glEnableVertexAttribArray(VS_ATTRIB_POSITION);
+      glEnableVertexAttribArray(VS_ATTRIB_NORMAL);
+
+      glBindBuffer(GL_ARRAY_BUFFER, buffer);
+      glVertexAttribPointer(VS_ATTRIB_POSITION, 3,
+          GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3),
+          (void*)0);
+      glVertexAttribPointer(VS_ATTRIB_NORMAL, 3,
+          GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3),
+          (void*)(sizeof(GLfloat) * 3));
+      break;
+    case VertexFormat::P3T2:
+      glEnableVertexAttribArray(VS_ATTRIB_POSITION);
+      glEnableVertexAttribArray(VS_ATTRIB_NORMAL);
+      assert(false); // TODO
+      break;
+  }
+
+  return std::make_shared<VertexBuffer>(format, buffer, vao);
 }
 
-VertexBuffer::VertexBuffer(VertexFormat format, GLuint buffer)
-  : format_(format), buffer_(buffer) {
+VertexBuffer::VertexBuffer(VertexFormat format, GLuint buffer, GLuint vao)
+  : format_(format), buffer_(buffer), vao_(vao) {
 }
 
 VertexBuffer::~VertexBuffer() {
   glDeleteBuffers(1, &buffer_);
+  glDeleteVertexArrays(1, &vao_);
 }
 
 std::unique_ptr<Mesh> Mesh::FromOBJ(const std::string& path) {

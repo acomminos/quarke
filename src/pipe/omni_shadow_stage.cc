@@ -1,6 +1,7 @@
 #include "pipe/omni_shadow_stage.h"
 #include <cstring>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
 namespace quarke {
@@ -126,6 +127,13 @@ void OmniShadowStage::RenderFace(GLenum face, const glm::vec3 position) {
 
   glm::mat4 transform = glm::perspective(90.f, 1.f, Z_NEAR, Z_FAR) *
                         glm::lookAt(position, position + dir, glm::vec3(0.f, 1.f, 0.f));
+  glUniformMatrix4fv(uniform_transform_, 1, GL_FALSE, glm::value_ptr(transform));
+
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
+  glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                       textures_[face - GL_TEXTURE_CUBE_MAP_POSITIVE_X], 0);
+  assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+
 
 }
 

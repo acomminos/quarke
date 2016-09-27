@@ -174,9 +174,7 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter,
       // TODO: switch to using VAOs. we might be able to make our bindings
       //       deterministic across materials.
       geo::VertexBuffer& vb = mesh->array_buffer();
-      GLuint vao; // XXX store
-      glGenVertexArrays(1, &vao);
-      glBindVertexArray(vao);
+      glBindVertexArray(vb.vertex_array());
 
       switch (vb.format()) {
         case geo::VertexFormat::P3N3T2:
@@ -230,7 +228,6 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter,
 
       glDisable(GL_BLEND);
       glDrawArrays(GL_TRIANGLES, 0, mesh->num_vertices());
-      glDeleteVertexArrays(1, &vao); // XXX
 
       mat->PostDrawMesh(*mesh);
     }

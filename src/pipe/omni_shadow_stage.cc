@@ -146,7 +146,6 @@ void OmniShadowStage::RenderFace(GLenum face, const glm::vec3 position,
 
   glm::mat4 transform = glm::perspective(90.f, 1.f, Z_NEAR, Z_FAR) *
                         glm::lookAt(position, position + dir, up);
-  glUniformMatrix4fv(uniform_transform_, 1, GL_FALSE, glm::value_ptr(transform));
 
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, face, cube_texture_, 0);
   assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
@@ -156,6 +155,8 @@ void OmniShadowStage::RenderFace(GLenum face, const glm::vec3 position,
 
   while (auto matit = iter.NextMaterial()) {
     while (auto mit = matit->Next()) {
+      glm::mat4 mvp_matrix = transform * mit->transform();
+      glUniformMatrix4fv(uniform_transform_, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
       geo::VertexBuffer& buffer = mit->array_buffer();
       glBindVertexArray(buffer.vertex_array());
       glDrawArrays(GL_TRIANGLES, 0, mit->num_vertices());

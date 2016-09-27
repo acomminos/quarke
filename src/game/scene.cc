@@ -2,6 +2,7 @@
 #include "mat/solid_material.h"
 #include "mat/textured_material.h"
 #include "util/toytga.h"
+#include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace quarke {
@@ -53,7 +54,8 @@ Scene::Scene(int width, int height)
   auto wall = geo::Mesh::FromOBJ("model/wall.obj");
   wall->set_transform(
       glm::translate(glm::mat4(), glm::vec3(0.0, 1.5, 2.5)) *
-      glm::scale(glm::mat4(), glm::vec3(3.0, 3.0, 3.0)));
+      glm::scale(glm::mat4(), glm::vec3(3.0, 3.0, 3.0)) *
+      glm::rotate(glm::mat4(), glm::pi<float>(), glm::vec3(0.f, 1.f, 0.f)));
   meshes_.AddMesh(textured_material_.get(), std::move(wall));
 
   point_lights_.push_back({1.0f, 15.0f, glm::vec3(0.f, 5.f, 0.f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)});

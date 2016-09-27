@@ -14,10 +14,6 @@ static const char* UNIFORM_MVP_MATRIX_NAME = "mvp_matrix";
 static const char* UNIFORM_NORMAL_MATRIX_NAME = "normal_matrix";
 static const char* UNIFORM_SAMPLER_MATRIX_NAME = "sampler";
 
-static const GLuint VS_IN_POSITION_LOCATION = 0;
-static const GLuint VS_IN_NORMAL_LOCATION = 1;
-static const GLuint VS_IN_TEXCOORD_LOCATION = 2;
-
 static const GLuint FS_OUT_COLOR_BUFFER = 0;
 static const GLuint FS_OUT_NORMAL_BUFFER = 1;
 static const GLuint FS_OUT_POSITION_BUFFER = 2;
@@ -171,51 +167,8 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter,
       // I guess we could sort of use a pointer to a material as an
       // identifier (as disappointing as that is)
 
-      // TODO: switch to using VAOs. we might be able to make our bindings
-      //       deterministic across materials.
       geo::VertexBuffer& vb = mesh->array_buffer();
       glBindVertexArray(vb.vertex_array());
-
-      switch (vb.format()) {
-        case geo::VertexFormat::P3N3T2:
-          glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
-          glEnableVertexAttribArray(VS_IN_NORMAL_LOCATION);
-
-          glBindBuffer(GL_ARRAY_BUFFER, vb.buffer());
-          glVertexAttribPointer(VS_IN_POSITION_LOCATION, 3,
-                                GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3 + 2),
-                                (void*)0);
-          glVertexAttribPointer(VS_IN_NORMAL_LOCATION, 3,
-                                GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3 + 2),
-                                (void*)(sizeof(GLfloat) * 3));
-
-          if (mat->use_texture()) {
-            glEnableVertexAttribArray(VS_IN_TEXCOORD_LOCATION);
-            glVertexAttribPointer(VS_IN_TEXCOORD_LOCATION, 2,
-                                  GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3 + 2),
-                                  (void*)(sizeof(GLfloat) * (3 + 3)));
-          }
-          break;
-        case geo::VertexFormat::P3N3:
-          glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
-          glEnableVertexAttribArray(VS_IN_NORMAL_LOCATION);
-
-          glBindBuffer(GL_ARRAY_BUFFER, vb.buffer());
-          glVertexAttribPointer(VS_IN_POSITION_LOCATION, 3,
-                                GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3),
-                                (void*)0);
-          glVertexAttribPointer(VS_IN_NORMAL_LOCATION, 3,
-                                GL_FLOAT, GL_FALSE, sizeof(GLfloat) * (3 + 3),
-                                (void*)(sizeof(GLfloat) * 3));
-          break;
-        case geo::VertexFormat::P3T2:
-          glEnableVertexAttribArray(VS_IN_POSITION_LOCATION);
-          if (mat->use_texture()) {
-            glEnableVertexAttribArray(VS_IN_TEXCOORD_LOCATION);
-          }
-          assert(false); // TODO
-          break;
-      }
 
       glm::mat4 model_matrix = mesh->transform();
       glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
@@ -246,12 +199,12 @@ GLuint GeometryStage::BuildVertexShader(const mat::Material& material) const {
   vs << "uniform mat4 " << UNIFORM_MVP_MATRIX_NAME << ";" << std::endl;
   vs << "uniform mat4 " << UNIFORM_NORMAL_MATRIX_NAME << ";" << std::endl;
 
-  vs << "layout(location = " << VS_IN_POSITION_LOCATION << ") "
+  vs << "layout(location = " << geo::VertexBuffer::VS_ATTRIB_POSITION << ") "
      << "in vec3 position;" << std::endl;
-  vs << "layout(location = " << VS_IN_NORMAL_LOCATION << ") "
+  vs << "layout(location = " << geo::VertexBuffer::VS_ATTRIB_NORMAL << ") "
      << "in vec3 normal;" << std::endl;
   if (material.use_texture()) {
-    vs << "layout(location = " << VS_IN_TEXCOORD_LOCATION << ") "
+    vs << "layout(location = " << geo::VertexBuffer::VS_ATTRIB_TEXCOORD << ") "
        << "in vec2 texcoord;" << std::endl;
   }
 

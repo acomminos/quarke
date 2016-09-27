@@ -174,7 +174,7 @@ void GeometryStage::Render(const game::Camera& camera, MaterialIterator& iter,
       glUniformMatrix4fv(model_location, 1, GL_FALSE, glm::value_ptr(model_matrix));
       glm::mat4 mvp_matrix = vp_matrix * mesh->transform();
       glUniformMatrix4fv(mvp_location, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
-      glm::mat4 normal_matrix = glm::transpose(glm::inverse(view_matrix * mesh->transform()));
+      glm::mat4 normal_matrix = glm::transpose(glm::inverse(mesh->transform()));
       glUniformMatrix4fv(normal_matrix_location, 1, GL_FALSE, glm::value_ptr(normal_matrix));
 
       mat->PreDrawMesh(*mesh); // setup per-mesh uniform attributes

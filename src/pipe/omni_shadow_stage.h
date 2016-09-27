@@ -4,6 +4,7 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include "pipe/geometry_stage.h" // for Material(Mesh)Iterator
+#include "game/camera.h"
 
 namespace quarke {
 namespace pipe {
@@ -20,7 +21,8 @@ class OmniShadowStage {
 
   // Constructs a cube shadow map at the given light position in world space.
   // Each shadow stage stores 6 textures.
-  void BuildShadowMap(const glm::vec3 position, MaterialIterator& iter);
+  void BuildShadowMap(const game::Camera& camera, const glm::vec3 position, 
+                      MaterialIterator& iter);
 
   // Sets the size of each dimension of the cubemapped textures.
   // `size` must be a power of two.
@@ -34,6 +36,7 @@ class OmniShadowStage {
   // - program_ is the current program.
   // - fbo_ is the bound framebuffer.
   // - cube_texture_ is bound to GL_TEXTURE_CUBE_MAP.
+  // - viewport size is texture size.
   void RenderFace(GLenum face, const glm::vec3 position, MaterialIterator& iter);
 
   static GLenum depth_internal_format() { return GL_DEPTH_COMPONENT; }

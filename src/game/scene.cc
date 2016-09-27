@@ -58,7 +58,7 @@ Scene::Scene(int width, int height)
       glm::rotate(glm::mat4(), glm::pi<float>(), glm::vec3(0.f, 1.f, 0.f)));
   meshes_.AddMesh(textured_material_.get(), std::move(wall));
 
-  point_lights_.push_back({1.0f, 15.0f, glm::vec3(0.f, 5.f, 0.f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)});
+  point_lights_.push_back({1.0f, 15.0f, glm::vec3(0.f, 3.f, -0.5f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)});
 }
 
 void Scene::Update(float dt) {
@@ -128,7 +128,7 @@ void Scene::Render() {
 
   mesh_iter.Reset();
   for (auto it = point_lights_.begin(); it != point_lights_.end(); it++) {
-    omni_shadow_->BuildShadowMap(it->position, mesh_iter);
+    omni_shadow_->BuildShadowMap(camera_, it->position, mesh_iter);
     lighting_->Illuminate(camera_, *it, omni_shadow_->cube_texture());
   }
 

@@ -97,9 +97,11 @@ OmniShadowStage::OmniShadowStage(GLuint program, GLuint fbo,
   uniform_transform_ = glGetUniformLocation(program, "mvp_matrix");
 }
 
-void OmniShadowStage::BuildShadowMap(const glm::vec3 position,
+void OmniShadowStage::BuildShadowMap(const game::Camera& camera,
+                                     const glm::vec3 position,
                                      MaterialIterator& iter) {
   glUseProgram(program_);
+  glViewport(0, 0, texture_size_, texture_size_);
   glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
   glBindTexture(GL_TEXTURE_CUBE_MAP, cube_texture_);
   for (int i = 0; i < 6; i++) {
@@ -108,6 +110,8 @@ void OmniShadowStage::BuildShadowMap(const glm::vec3 position,
     iter.Reset();
   }
   glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+  // FIXME: we only pass the camera to restore the viewport.
+  glViewport(0, 0, camera.viewport_width(), camera.viewport_height());
 }
 
 void OmniShadowStage::RenderFace(GLenum face, const glm::vec3 position,
@@ -117,27 +121,27 @@ void OmniShadowStage::RenderFace(GLenum face, const glm::vec3 position,
   switch (face) {
     case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
       dir = glm::vec3(1.f, 0.f, 0.f);
-      up = glm::vec3(0.f, -1.f, 0.f);
+      up = glm::vec3(0.f, 1.f, 0.f);
       break;
     case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
       dir = glm::vec3(-1.f, 0.f, 0.f);
-      up = glm::vec3(0.f, -1.f, 0.f);
+      up = glm::vec3(0.f, 1.f, 0.f);
       break;
     case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
       dir = glm::vec3(0.f, 1.f, 0.f);
-      up = glm::vec3(0.f, 0.f, 1.f);
+      up = glm::vec3(0.f, 0.f, -1.f);
       break;
     case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
       dir = glm::vec3(0.f, -1.f, 0.f);
-      up = glm::vec3(0.f, 0.f, 1.f);
+      up = glm::vec3(0.f, 0.f, -1.f);
       break;
     case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
       dir = glm::vec3(0.f, 0.f, 1.f);
-      up = glm::vec3(0.f, -1.f, 0.f);
+      up = glm::vec3(0.f, 1.f, 0.f);
       break;
     case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
       dir = glm::vec3(0.f, 0.f, -1.f);
-      up = glm::vec3(0.f, -1.f, 0.f);
+      up = glm::vec3(0.f, 1.f, 0.f);
       break;
     default:
       assert(true);

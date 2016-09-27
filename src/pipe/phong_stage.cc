@@ -47,7 +47,7 @@ uniform samplerCube shadowSamplerCube;
 const float specularPower = 5.0;
 
 // amount of depth buffer variance that's acceptable to reject within
-const float shadowMapEpsilon = 0.01;
+const float shadowMapEpsilon = 0.03;
 
 out vec4 outLight;
 

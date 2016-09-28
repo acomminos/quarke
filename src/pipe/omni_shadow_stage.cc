@@ -9,33 +9,36 @@ namespace quarke {
 namespace pipe {
 
 static const float Z_NEAR = 0.1f;
-static const float Z_FAR = 1000.f;
+static const float Z_FAR = 25.f;
 static const char* VS_SOURCE = R"(
 #version 330 core
 
 uniform mat4 mvp_matrix;
 uniform mat4 model_matrix;
-uniform vec3 light_position;
 
 // FIXME: this assumes position 0, should build from stream and consts instead.
 layout(location = 0) in vec3 position;
 
-out vec3 v_dist;
+out vec4 v_position;
 
 void main() {
-  v_dist = (model_matrix * vec4(position, 1.0)).xyz - light_position;
+  v_position = model_matrix * vec4(position, 1.0);
   gl_Position = mvp_matrix * vec4(position, 1.0);
 }
 )";
 static const char* FS_SOURCE = R"(
 #version 330 core
 
-in vec3 v_dist;
+uniform vec3 light_position;
+
+in vec4 v_position;
+
 layout(location = 0) out float light_distance;
 
 void main() {
   // use squared distance, as recommended by GPU gems
-  light_distance = dot(v_dist, v_dist);
+  vec3 dist = v_position.xyz - light_position;
+  light_distance = dot(dist, dist);
 }
 )";
 
@@ -53,6 +56,7 @@ std::unique_ptr<OmniShadowStage> OmniShadowStage::Create(GLsizei texture_size) {
   glTexImage2D(GL_TEXTURE_2D, 0, depth_internal_format(), texture_size,
                texture_size, 0, depth_format(), GL_FLOAT, nullptr);
   glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth_tex, 0);
+  glBindTexture(GL_TEXTURE_2D, 0);
   assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 
   GLuint program = glCreateProgram();

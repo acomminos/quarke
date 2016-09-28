@@ -33,19 +33,20 @@ Scene::Scene(int width, int height)
   // XXX: Load some demo data.
   auto armadillo = geo::Mesh::FromOBJ("model/armadillo.obj");
   armadillo->set_color(glm::vec4(0.2, 0.6, 0.2, 1.0));
+  armadillo->set_transform(glm::translate(glm::mat4(), glm::vec3(0.f, 1.f, 0.f)));
   meshes_.AddMesh(solid_material_.get(), std::move(armadillo));
 
-  auto terrain = geo::Mesh::FromOBJ("model/terrain.obj");
+  auto terrain = geo::Mesh::FromOBJ("model/huge_box.obj");
   terrain->set_color(glm::vec4(0.8, 0.8, 0.8, 1.0));
   terrain->set_transform(
-      glm::translate(glm::mat4(), glm::vec3(0.0, -1.0, 0.0)) *
-      glm::scale(terrain->transform(), glm::vec3(200.0, 1.0, 200.0)));
+      glm::translate(glm::mat4(), glm::vec3(0.f, 0.7f, 0.f)) *
+      glm::scale(glm::mat4(), glm::vec3(4.0, 4.0, 4.0)));
   meshes_.AddMesh(solid_material_.get(), std::move(terrain));
 
   auto bunny = geo::Mesh::FromOBJ("model/bunny.obj");
   bunny->set_color(glm::vec4(1.0, 1.0, 1.0, 1.0));
   bunny->set_transform(
-      glm::translate(glm::mat4(), glm::vec3(2.5, -1.0, 0.0)) *
+      glm::translate(glm::mat4(), glm::vec3(2.5, 0.0, 0.0)) *
       glm::rotate(glm::mat4(), 180.f, glm::vec3(0.0, 1.0, 0.0)) *
       glm::scale(glm::mat4(), glm::vec3(0.25, 0.25, 0.25))
   );
@@ -53,18 +54,18 @@ Scene::Scene(int width, int height)
 
   auto wall = geo::Mesh::FromOBJ("model/wall.obj");
   wall->set_transform(
-      glm::translate(glm::mat4(), glm::vec3(0.0, 1.5, 2.5)) *
+      glm::translate(glm::mat4(), glm::vec3(0.0, 2.5, 2.5)) *
       glm::scale(glm::mat4(), glm::vec3(3.0, 3.0, 3.0)) *
       glm::rotate(glm::mat4(), glm::pi<float>(), glm::vec3(0.f, 1.f, 0.f)));
   meshes_.AddMesh(textured_material_.get(), std::move(wall));
 
-  point_lights_.push_back({1.0f, 25.0f, glm::vec3(0.f, 3.f, -1.5f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)});
+  point_lights_.push_back({1.0f, 30.0f, glm::vec3(0.f, 3.f, -5.f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)});
 }
 
 void Scene::Update(float dt) {
   // XXX: demo
   const float rot_speed = 1.2; // rotational speed in radians
-  const float rot_dist = 2.0;
+  const float rot_dist = 5.0;
   const float base_z = -8.0;
   const float base_y = 3.0;
   rot = rot + (dt * rot_speed);
@@ -72,7 +73,7 @@ void Scene::Update(float dt) {
   float z = rot_dist * sin(rot);
 
   camera_.LookAt({ x, base_y, z + base_z }, { 0.0, 2.0, 0.0 }, { 0.0, 1.0, 0.0 });
-  point_lights_[0].position = { x + 1.f, base_y + 1.f, z + base_z };
+  point_lights_[0].position = { x + 3.f, base_y + 4.f, z + base_z };
 }
 
 void Scene::Render() {
@@ -102,7 +103,7 @@ void Scene::Render() {
   }
 
   if (!omni_shadow_) {
-    const GLsizei TEXTURE_RESOLUTION = 1024;
+    const GLsizei TEXTURE_RESOLUTION = 2048;
     omni_shadow_ = pipe::OmniShadowStage::Create(TEXTURE_RESOLUTION);
     assert(omni_shadow_);
   }

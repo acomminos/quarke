@@ -32,9 +32,6 @@ class OmniShadowStage {
   // `size` must be a power of two.
   void SetTextureDimension(GLsizei size);
 
-  // Returns the number of world units this light will render geometry around.
-  GLuint spread() { return 10.f; }
-
   static GLenum depth_format() { return GL_DEPTH_COMPONENT; }
   static GLenum distance_format() { return GL_RED; }
   GLuint cube_texture() { return cube_texture_; }

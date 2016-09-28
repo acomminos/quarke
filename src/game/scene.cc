@@ -59,21 +59,20 @@ Scene::Scene(int width, int height)
       glm::rotate(glm::mat4(), glm::pi<float>(), glm::vec3(0.f, 1.f, 0.f)));
   meshes_.AddMesh(textured_material_.get(), std::move(wall));
 
-  point_lights_.push_back({1.0f, 30.0f, glm::vec3(0.f, 3.f, -5.f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)});
+  point_lights_.push_back({1.0f, 30.0f, glm::vec3(0.f, 7.f, -5.f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)});
 }
 
 void Scene::Update(float dt) {
   // XXX: demo
   const float rot_speed = 1.2; // rotational speed in radians
-  const float rot_dist = 5.0;
+  const float rot_dist = 3.0;
   const float base_z = -8.0;
-  const float base_y = 3.0;
+  const float base_y = 4.0;
   rot = rot + (dt * rot_speed);
   float x = rot_dist * cos(rot);
   float z = rot_dist * sin(rot);
 
   camera_.LookAt({ x, base_y, z + base_z }, { 0.0, 2.0, 0.0 }, { 0.0, 1.0, 0.0 });
-  point_lights_[0].position = { x + 3.f, base_y + 4.f, z + base_z };
 }
 
 void Scene::Render() {

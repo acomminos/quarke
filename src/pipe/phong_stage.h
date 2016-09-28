@@ -81,7 +81,6 @@ class PhongStage {
   GLuint light_color_location_;
   GLuint light_distance_location_;
   GLuint shadow_sampler_location_;
-  GLuint shadow_transform_location_;
 };
 
 }  // namespace pipe

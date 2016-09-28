@@ -9,7 +9,7 @@ namespace quarke {
 namespace pipe {
 
 static const float Z_NEAR = 0.1f;
-static const float Z_FAR = 25.f;
+static const float Z_FAR = 100.f;
 static const char* VS_SOURCE = R"(
 #version 330 core
 
@@ -96,6 +96,8 @@ std::unique_ptr<OmniShadowStage> OmniShadowStage::Create(GLsizei texture_size) {
   glDeleteShader(vs);
   glDeleteShader(fs);
 
+  glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
   GLuint cube_texture;
   glGenTextures(1, &cube_texture);
   glBindTexture(GL_TEXTURE_CUBE_MAP, cube_texture);
@@ -155,11 +157,11 @@ void OmniShadowStage::RenderFace(GLenum face, const glm::vec3 position,
   switch (face) {
     case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
       dir = glm::vec3(1.f, 0.f, 0.f);
-      up = glm::vec3(0.f, 1.f, 0.f);
+      up = glm::vec3(0.f, -1.f, 0.f);
       break;
     case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
       dir = glm::vec3(-1.f, 0.f, 0.f);
-      up = glm::vec3(0.f, 1.f, 0.f);
+      up = glm::vec3(0.f, -1.f, 0.f);
       break;
     case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
       dir = glm::vec3(0.f, 1.f, 0.f);
@@ -167,7 +169,7 @@ void OmniShadowStage::RenderFace(GLenum face, const glm::vec3 position,
       break;
     case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
       dir = glm::vec3(0.f, -1.f, 0.f);
-      up = glm::vec3(0.f, 0.f, 1.f);
+      up = glm::vec3(0.f, 0.f, -1.f);
       break;
     case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
       dir = glm::vec3(0.f, 0.f, 1.f);
@@ -182,7 +184,7 @@ void OmniShadowStage::RenderFace(GLenum face, const glm::vec3 position,
       break;
   }
 
-  glm::mat4 transform = glm::perspective(90.f, 1.f, Z_NEAR, Z_FAR) *
+  glm::mat4 transform = glm::perspective(glm::radians(90.f), 1.f, Z_NEAR, Z_FAR) *
                         glm::lookAt(position, position + dir, up);
 
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, face, cube_texture_, 0);

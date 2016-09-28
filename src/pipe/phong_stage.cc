@@ -43,7 +43,6 @@ uniform float lightDistance;
 
 // omni-directional cube map containing fragment distances from the light source
 uniform samplerCube shadowSamplerCube;
-uniform mat4 shadowTransform;
 
 // TODO: implement this per-material. perhaps a specular buffer?
 const float specularPower = 5.0;
@@ -62,12 +61,11 @@ void main(void) {
   vec3 pos_light = pos - lightPosition;
   float distSq = dot(pos_light, pos_light);
 
-  vec4 shadowPos = shadowTransform * vec4(pos_light, 1.0);
   // shadow mapping
-  float shadowDepth = texture(shadowSamplerCube, vec3(shadowPos.xy, pos_light.z)).r;
-  float shadowIntensity = 0.25;
+  float shadowDepth = texture(shadowSamplerCube, pos_light).r;
+  float shadowIntensity = 0.25; // soft shadows
   if (abs(shadowDepth - distSq) < shadowMapEpsilon) {
-    shadowIntensity = 1.0; // soft shadows
+    shadowIntensity = 1.0; // if within a margin of error of the correct depth, illuminate
   }
 
   vec3 d = normalize(lightPosition - pos);
@@ -168,7 +166,6 @@ PhongStage::PhongStage(int width, int height, GLuint program,
   light_color_location_ = glGetUniformLocation(program, "lightColor");
   light_distance_location_ = glGetUniformLocation(program, "lightDistance");
   shadow_sampler_location_ = glGetUniformLocation(program, "shadowSamplerCube");
-  shadow_transform_location_ = glGetUniformLocation(program, "shadowTransform");
 }
 
 void PhongStage::Clear() {
@@ -211,9 +208,6 @@ void PhongStage::Illuminate(const game::Camera& camera, const PointLight& light,
   glUniform3fv(light_position_location_, 1, glm::value_ptr(light.position));
   glUniform4fv(light_color_location_, 1, glm::value_ptr(light.color));
   glUniform1f(light_distance_location_, light.max_distance);
-
-  auto tmpMat = glm::perspective(90.f, 1.f, 0.1f, 25.0f);
-  glUniformMatrix4fv(shadow_transform_location_, 1, GL_FALSE, glm::value_ptr(tmpMat));
 
   // Additive blending
   glEnable(GL_BLEND);

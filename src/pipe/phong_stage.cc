@@ -40,14 +40,14 @@ uniform vec3 lightPosition;
 uniform vec4 lightColor;
 uniform float lightDistance;
 
-// omni-directional cube shadow map
+// omni-directional cube map containing fragment distances from the light source
 uniform samplerCube shadowSamplerCube;
 
 // TODO: implement this per-material. perhaps a specular buffer?
 const float specularPower = 5.0;
 
 // amount of depth buffer variance that's acceptable to reject within
-const float shadowMapEpsilon = 0.03;
+const float shadowMapEpsilon = 0.05;
 
 out vec4 outLight;
 
@@ -55,13 +55,16 @@ void main(void) {
   vec4 albedo = texture(colorSampler, gl_FragCoord.xy);
   vec3 normal = texture(normalSampler, gl_FragCoord.xy).xyz;
   vec3 pos = texture(positionSampler, gl_FragCoord.xy).xyz;
-  float depth = texture(depthSampler, gl_FragCoord.xy).r;
+  //float depth = texture(depthSampler, gl_FragCoord.xy).r;
+
+  vec3 pos_light = pos - lightPosition;
+  float distSq = dot(pos_light, pos_light);
 
   // shadow mapping
-  float shadowDepth = texture(shadowSamplerCube, (pos - lightPosition)).r;
-  float shadowIntensity = 0.0;
-  if (abs(shadowDepth - depth) < shadowMapEpsilon) {
-    shadowIntensity = 1.0;
+  float shadowDepth = texture(shadowSamplerCube, pos_light).r;
+  float shadowIntensity = 1.0;
+  if ((shadowDepth - distSq) < shadowMapEpsilon) {
+    shadowIntensity = shadowDepth/distSq; // soft shadows
   }
 
   vec3 d = normalize(lightPosition - pos);
@@ -74,8 +77,8 @@ void main(void) {
   float sIntensity = max(dot(half, normal), 0.0);
   vec4 specularColor = lightColor * pow(sIntensity, specularPower);
 
-  float dist = distance(pos, lightPosition);
   // Use a nonlinearity for falloff around the edges.
+  float dist = sqrt(distSq);
   float lightIntensity = max(1.0 - pow(dist/lightDistance, 2.0), 0.0);
 
   outLight = shadowIntensity * lightIntensity * (diffuseColor + specularColor);

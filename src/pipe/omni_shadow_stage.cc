@@ -9,31 +9,51 @@ namespace quarke {
 namespace pipe {
 
 static const float Z_NEAR = 0.1f;
-static const float Z_FAR = 100.f;
+static const float Z_FAR = 1000.f;
 static const char* VS_SOURCE = R"(
 #version 330 core
 
 uniform mat4 mvp_matrix;
+uniform mat4 model_matrix;
+uniform vec3 light_position;
 
 // FIXME: this assumes position 0, should build from stream and consts instead.
 layout(location = 0) in vec3 position;
 
+out vec3 v_dist;
+
 void main() {
+  v_dist = (model_matrix * vec4(position, 1.0)).xyz - light_position;
   gl_Position = mvp_matrix * vec4(position, 1.0);
 }
 )";
 static const char* FS_SOURCE = R"(
 #version 330 core
 
+in vec3 v_dist;
+layout(location = 0) out float light_distance;
+
 void main() {
-  // FIXME: should we transform our depth data?
+  // use squared distance, as recommended by GPU gems
+  light_distance = dot(v_dist, v_dist);
 }
 )";
+
+static const GLuint FS_OUT_LIGHT_DISTANCE = 0;
 
 
 std::unique_ptr<OmniShadowStage> OmniShadowStage::Create(GLsizei texture_size) {
   GLuint fbo;
   glGenFramebuffers(1, &fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+  GLuint depth_tex;
+  glGenTextures(1, &depth_tex);
+  glBindTexture(GL_TEXTURE_2D, depth_tex);
+  glTexImage2D(GL_TEXTURE_2D, 0, depth_internal_format(), texture_size,
+               texture_size, 0, depth_format(), GL_FLOAT, nullptr);
+  glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth_tex, 0);
+  assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 
   GLuint program = glCreateProgram();
 
@@ -81,20 +101,24 @@ std::unique_ptr<OmniShadowStage> OmniShadowStage::Create(GLsizei texture_size) {
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
   for (int i = 0; i < 6; i++) {
-    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, depth_internal_format(),
-                 texture_size, texture_size, 0, depth_format(), GL_FLOAT, nullptr);
+    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, distance_internal_format(),
+                 texture_size, texture_size, 0, distance_format(), GL_FLOAT, nullptr);
   }
   glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
   return std::make_unique<OmniShadowStage>(program, fbo, cube_texture,
-                                           texture_size);
+                                           depth_tex, texture_size);
 }
 
 OmniShadowStage::OmniShadowStage(GLuint program, GLuint fbo,
-                                 GLuint cube_texture, GLsizei texture_size)
+                                 GLuint cube_texture, GLuint depth_texture,
+                                 GLsizei texture_size)
   : program_(program), fbo_(fbo)
-  , cube_texture_(cube_texture), texture_size_(texture_size) {
+  , cube_texture_(cube_texture), depth_texture_(depth_texture)
+  , texture_size_(texture_size) {
   uniform_transform_ = glGetUniformLocation(program, "mvp_matrix");
+  uniform_model_transform_ = glGetUniformLocation(program, "model_matrix");
+  uniform_light_position_ = glGetUniformLocation(program, "light_position");
 }
 
 void OmniShadowStage::BuildShadowMap(const game::Camera& camera,
@@ -104,6 +128,12 @@ void OmniShadowStage::BuildShadowMap(const game::Camera& camera,
   glViewport(0, 0, texture_size_, texture_size_);
   glBindFramebuffer(GL_FRAMEBUFFER, fbo_);
   glBindTexture(GL_TEXTURE_CUBE_MAP, cube_texture_);
+
+  glUniform3fv(uniform_light_position_, 1, glm::value_ptr(position));
+  glDrawBuffers(1, (const GLenum[]) { GL_COLOR_ATTACHMENT0 });
+  glEnable(GL_DEPTH_TEST);
+  glClearColor(0.0, 0.0, 0.0, 0.0);
+
   for (int i = 0; i < 6; i++) {
     GLenum face = GL_TEXTURE_CUBE_MAP_POSITIVE_X + i;
     RenderFace(face, position, iter);
@@ -129,19 +159,19 @@ void OmniShadowStage::RenderFace(GLenum face, const glm::vec3 position,
       break;
     case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
       dir = glm::vec3(0.f, 1.f, 0.f);
-      up = glm::vec3(0.f, 0.f, -1.f);
+      up = glm::vec3(0.f, 0.f, 1.f);
       break;
     case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
       dir = glm::vec3(0.f, -1.f, 0.f);
-      up = glm::vec3(0.f, 0.f, -1.f);
+      up = glm::vec3(0.f, 0.f, 1.f);
       break;
     case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
       dir = glm::vec3(0.f, 0.f, 1.f);
-      up = glm::vec3(0.f, 1.f, 0.f);
+      up = glm::vec3(0.f, -1.f, 0.f);
       break;
     case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
       dir = glm::vec3(0.f, 0.f, -1.f);
-      up = glm::vec3(0.f, 1.f, 0.f);
+      up = glm::vec3(0.f, -1.f, 0.f);
       break;
     default:
       assert(true);
@@ -151,16 +181,14 @@ void OmniShadowStage::RenderFace(GLenum face, const glm::vec3 position,
   glm::mat4 transform = glm::perspective(90.f, 1.f, Z_NEAR, Z_FAR) *
                         glm::lookAt(position, position + dir, up);
 
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, face, cube_texture_, 0);
-  assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-  glReadBuffer(GL_NONE);
-  glDrawBuffer(GL_NONE);
-  glClear(GL_DEPTH_BUFFER_BIT);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, face, cube_texture_, 0);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   while (auto matit = iter.NextMaterial()) {
     while (auto mit = matit->Next()) {
       glm::mat4 mvp_matrix = transform * mit->transform();
       glUniformMatrix4fv(uniform_transform_, 1, GL_FALSE, glm::value_ptr(mvp_matrix));
+      glUniformMatrix4fv(uniform_model_transform_, 1, GL_FALSE, glm::value_ptr(mit->transform()));
       geo::VertexBuffer& buffer = mit->array_buffer();
       glBindVertexArray(buffer.vertex_array());
       glDrawArrays(GL_TRIANGLES, 0, mit->num_vertices());

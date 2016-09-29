@@ -7,6 +7,7 @@ Some interesting features;
 
 - Deferred / multipass shading
 - Omni-directional dynamic point shadow mapping
+- Depth-based SSAO (screen space ambient occlusion)
 - Blinn-phong per-fragment illumination
 - Built-in direct-color TGA loader, delegates to tinyobjloader for OBJs
 

@@ -12,6 +12,7 @@
 #include "pipe/geometry_stage.h"
 #include "pipe/phong_stage.h"
 #include "pipe/omni_shadow_stage.h"
+#include "pipe/ssao_stage.h"
 #include "geo/linked_mesh_collection.h"
 
 namespace quarke {
@@ -42,6 +43,7 @@ class Scene {
   std::unique_ptr<pipe::AmbientStage> ambient_;
   std::unique_ptr<pipe::PhongStage> lighting_;
   std::unique_ptr<pipe::OmniShadowStage> omni_shadow_;
+  std::unique_ptr<pipe::SSAOStage> ssao_;
 
   geo::LinkedMeshCollection meshes_;
 

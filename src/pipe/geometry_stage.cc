@@ -46,8 +46,8 @@ std::unique_ptr<GeometryStage> GeometryStage::Create(int width, int height) {
 
   GLuint depth_tex;
   glGenTextures(1, &depth_tex);
-  glBindTexture(GL_TEXTURE_RECTANGLE, depth_tex);
-  glTexImage2D(GL_TEXTURE_RECTANGLE, 0, depth_format(), width, height, 0,
+  glBindTexture(GL_TEXTURE_2D, depth_tex);
+  glTexImage2D(GL_TEXTURE_2D, 0, depth_format(), width, height, 0,
                GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
   glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth_tex, 0);
 
@@ -90,8 +90,8 @@ void GeometryStage::SetOutputSize(int width, int height) {
   glBindTexture(GL_TEXTURE_RECTANGLE, normal_tex_);
   glTexImage2D(GL_TEXTURE_RECTANGLE, 0, normal_format(), width, height, 0,
                GL_RGBA, GL_FLOAT, nullptr);
-  glBindTexture(GL_TEXTURE_RECTANGLE, depth_tex_);
-  glTexImage2D(GL_TEXTURE_RECTANGLE, 0, depth_format(), width, height, 0,
+  glBindTexture(GL_TEXTURE_2D, depth_tex_);
+  glTexImage2D(GL_TEXTURE_2D, 0, depth_format(), width, height, 0,
                GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 }
 

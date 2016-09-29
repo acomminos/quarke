@@ -197,7 +197,7 @@ void PhongStage::Illuminate(const game::Camera& camera, const PointLight& light,
   glUniform1i(position_sampler_location_, 2);
 
   glActiveTexture(GL_TEXTURE3);
-  glBindTexture(GL_TEXTURE_RECTANGLE, depth_tex_);
+  glBindTexture(GL_TEXTURE_2D, depth_tex_);
   glUniform1i(depth_sampler_location_, 3);
 
   glActiveTexture(GL_TEXTURE4);

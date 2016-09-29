@@ -107,6 +107,12 @@ void Scene::Render() {
     assert(omni_shadow_);
   }
 
+  if (!ssao_) {
+    ssao_ = pipe::SSAOStage::Create(camera_.viewport_width(),
+                                    camera_.viewport_height());
+    assert(ssao_);
+  }
+
   auto mesh_iter = meshes_.Iterator();
   geom_->Clear();
   geom_->Render(camera_, mesh_iter);
@@ -132,6 +138,9 @@ void Scene::Render() {
     omni_shadow_->BuildShadowMap(camera_, it->position, mesh_iter);
     lighting_->Illuminate(camera_, *it, omni_shadow_->cube_texture());
   }
+
+  ssao_->Clear();
+  ssao_->Render(camera_, lighting_->tex(), geom_->depth_tex());
 
   // FIXME: this blit is the worst
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -162,9 +171,16 @@ void Scene::Render() {
                     2 * width / 3, height/3, width, 2 * height / 3,
                     GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
-  // Draw light buffer in top left
+  // Draw light buffer in middle right
   glBindFramebuffer(GL_READ_FRAMEBUFFER, lighting_->fbo());
   glReadBuffer(lighting_->buffer());
+  glBlitFramebuffer(0, 0, width, height,
+                    2 * width / 3, 2 * height/3, width, height,
+                    GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+  // Draw SSAO'd light buffer in top left
+  glBindFramebuffer(GL_READ_FRAMEBUFFER, ssao_->fbo());
+  glReadBuffer(ssao_->buffer());
   glBlitFramebuffer(0, 0, width, height,
                     0, height/3, 2 * width / 3, height,
                     GL_COLOR_BUFFER_BIT, GL_LINEAR);

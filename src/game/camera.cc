@@ -19,6 +19,10 @@ void Camera::LookAt(const glm::vec3 position, const glm::vec3 target,
   view_ = glm::lookAt(position, target, up);
 }
 
+void Camera::PostTranslate(const glm::vec3 translation) {
+  view_ = glm::translate(glm::mat4(), translation) * view_;
+}
+
 void Camera::SetViewport(int width, int height) {
   viewport_width_ = width;
   viewport_height_ = height;

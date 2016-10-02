@@ -53,7 +53,7 @@ void Game::Loop() {
 
   int width, height;
   glfwGetFramebufferSize(window_, &width, &height);
-  Scene scene(width, height); // XXX: TEMP
+  Scene scene(*this, width, height); // XXX: TEMP
   todo_remove_scene = &scene;
 
   glfwSetFramebufferSizeCallback(window_, [](GLFWwindow*, int width, int height) {
@@ -61,16 +61,20 @@ void Game::Loop() {
       todo_remove_scene->OnResize(width, height);
   });
 
-  float dt = 1.f/60.f;
+  glfwSetKeyCallback(window_, [](GLFWwindow*, int key, int scancode, int action, int mods) {
+      todo_remove_scene->OnKeyEvent(key, scancode, action, mods);
+  });
+
+  last_delta_ = 1.f/60.f;
   while (!glfwWindowShouldClose(window_)) {
     float start = glfwGetTime();
 
-    scene.Update(dt);
+    scene.Update(last_delta_);
     scene.Render();
     glfwSwapBuffers(window_);
     glfwPollEvents();
 
-    dt = fmin(glfwGetTime() - start, MAX_TIME_STEP);
+    last_delta_ = fmin(glfwGetTime() - start, MAX_TIME_STEP);
   }
 
   todo_remove_scene = nullptr;

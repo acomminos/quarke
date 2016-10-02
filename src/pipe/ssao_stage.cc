@@ -13,8 +13,8 @@ uniform sampler2DRect depth_tex;
 
 layout(location = 0) out vec4 outColor;
 
-const int filterRadius = 8;
-const int samples = 6;
+const int filterRadius = 2;
+const int samples = 4;
 
 // Undoes the MVP transformation from screen space to clip space.
 float linearizeDepth(in float depth) {
@@ -38,7 +38,7 @@ void main(void) {
   }
   val /= samples;
 
-  float shadow = 0.1 * max(1.0 - val / centerDepth, 0.0);
+  float shadow = 0.1 * max(centerDepth - val, 0.0);
   outColor = texture(light_tex, gl_FragCoord.xy) - (vec4(1.0, 1.0, 1.0, 0.0) * shadow);
 }
 

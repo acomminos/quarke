@@ -18,11 +18,13 @@
 namespace quarke {
 namespace game {
 
+class Game;
+
 // A scene manages the rendering world state (such as the projection matrix),
 // as well as the gfx pipeline.
 class Scene {
  public:
-  Scene(int width, int height);
+  Scene(const Game& game, int width, int height);
 
   void Update(float dt);
   void Render();
@@ -31,8 +33,14 @@ class Scene {
   // The dimensions provided are in device pixel units.
   void OnResize(int width, int height);
 
+  // Maps directly to a GLFW key callback.
+  // Called immediately after swapbuffers.
+  void OnKeyEvent(int key, int scancode, int action, int mods);
+
  private:
+  const Game& game_;
   Camera camera_;
+  bool manual_control_; // true if the user has pressed a camera key.
   float rot; // tmp
   GLuint pepper_tex_; // tmp
   std::vector<pipe::PointLight> point_lights_;

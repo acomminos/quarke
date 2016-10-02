@@ -1,4 +1,5 @@
 #include "game/scene.h"
+#include "game/game.h"
 #include "mat/solid_material.h"
 #include "mat/textured_material.h"
 #include "util/toytga.h"
@@ -8,8 +9,10 @@
 namespace quarke {
 namespace game {
 
-Scene::Scene(int width, int height)
-  : camera_(width, height)
+Scene::Scene(const Game& game, int width, int height)
+  : game_(game)
+  , camera_(width, height)
+  , manual_control_(false)
   , rot(0) {
 
   solid_material_ = std::make_unique<mat::SolidMaterial>();
@@ -63,7 +66,30 @@ Scene::Scene(int width, int height)
 }
 
 void Scene::Update(float dt) {
+  GLFWwindow* window = game_.window();
+
+  const float MANUAL_SPEED = 5.f * dt;
+  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+    manual_control_ = true;
+    camera_.PostTranslate(glm::vec3(0, 0, MANUAL_SPEED));
+  }
+  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+    manual_control_ = true;
+    camera_.PostTranslate(glm::vec3(0, 0, -MANUAL_SPEED));
+  }
+  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+    manual_control_ = true;
+    camera_.PostTranslate(glm::vec3(MANUAL_SPEED, 0, 0));
+  }
+  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+    manual_control_ = true;
+    camera_.PostTranslate(glm::vec3(-MANUAL_SPEED, 0, 0));
+  }
+
   // XXX: demo
+  if (manual_control_)
+    return;
+
   const float rot_speed = 1.2; // rotational speed in radians
   const float rot_dist = 3.0;
   const float base_z = -8.0;
@@ -192,6 +218,11 @@ void Scene::OnResize(int width, int height) {
   camera_.SetViewport(width, height);
   if (lighting_)
     lighting_->Resize(width, height);
+}
+
+void Scene::OnKeyEvent(int key, int scancode, int action, int mods) {
+  // TODO: one-off key event handling.
+  //       for movement, use the main loop.
 }
 
 }  // namespace game

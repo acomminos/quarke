@@ -23,6 +23,14 @@ void Camera::PostTranslate(const glm::vec3 translation) {
   view_ = glm::translate(glm::mat4(), translation) * view_;
 }
 
+void Camera::PostRotate(const glm::vec3 axis, float angle) {
+  view_ = glm::rotate(glm::mat4(), angle, axis) * view_;
+}
+
+void Camera::PreRotate(const glm::vec3 axis, float angle) {
+  view_ = view_ * glm::rotate(glm::mat4(), angle, axis);
+}
+
 void Camera::SetViewport(int width, int height) {
   viewport_width_ = width;
   viewport_height_ = height;

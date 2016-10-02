@@ -68,22 +68,40 @@ Scene::Scene(const Game& game, int width, int height)
 void Scene::Update(float dt) {
   GLFWwindow* window = game_.window();
 
-  const float MANUAL_SPEED = 5.f * dt;
+  // TODO: migrate this to a demo input controller.
+  const float MANUAL_TRANSLATE_SPEED = 5.f * dt; // in world units/s
+  const float MANUAL_ROTATION_SPEED = glm::pi<float>()/3.f * dt; // in radians/s
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
     manual_control_ = true;
-    camera_.PostTranslate(glm::vec3(0, 0, MANUAL_SPEED));
+    camera_.PostTranslate(glm::vec3(0, 0, MANUAL_TRANSLATE_SPEED));
   }
   if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
     manual_control_ = true;
-    camera_.PostTranslate(glm::vec3(0, 0, -MANUAL_SPEED));
+    camera_.PostTranslate(glm::vec3(0, 0, -MANUAL_TRANSLATE_SPEED));
   }
   if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
     manual_control_ = true;
-    camera_.PostTranslate(glm::vec3(MANUAL_SPEED, 0, 0));
+    camera_.PostTranslate(glm::vec3(MANUAL_TRANSLATE_SPEED, 0, 0));
   }
   if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
     manual_control_ = true;
-    camera_.PostTranslate(glm::vec3(-MANUAL_SPEED, 0, 0));
+    camera_.PostTranslate(glm::vec3(-MANUAL_TRANSLATE_SPEED, 0, 0));
+  }
+  if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+    manual_control_ = true;
+    camera_.PostRotate(glm::vec3(1, 0, 0), -MANUAL_ROTATION_SPEED);
+  }
+  if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+    manual_control_ = true;
+    camera_.PostRotate(glm::vec3(1, 0, 0), MANUAL_ROTATION_SPEED);
+  }
+  if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+    manual_control_ = true;
+    camera_.PostRotate(glm::vec3(0, 1, 0), -MANUAL_ROTATION_SPEED);
+  }
+  if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+    manual_control_ = true;
+    camera_.PostRotate(glm::vec3(0, 1, 0), MANUAL_ROTATION_SPEED);
   }
 
   // XXX: demo

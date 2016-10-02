@@ -24,6 +24,12 @@ class Camera {
   // Applies a translation in the standard basis prior to any transforms.
   void PreTranslate(const glm::vec3 translation);
 
+  // Applies a rotation in the view transform's basis to the view transform.
+  void PostRotate(const glm::vec3 axis, float angle);
+
+  // Applies a rotation in the standard basis to the view transform.
+  void PreRotate(const glm::vec3 axis, float angle);
+
   void SetViewport(int width, int height);
 
   // Computes a world-to-NDC matrix representing this camera.

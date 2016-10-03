@@ -11,6 +11,7 @@ set(QUARKE_SOURCES
     pipe/ambient_stage.cc
     pipe/omni_shadow_stage.cc
     pipe/ssao_stage.cc
+    pipe/gaussian_stage.cc
     mat/solid_material.cc
     mat/textured_material.cc
     geo/mesh.cc

@@ -26,6 +26,7 @@ class SSAOStage {
 
   GLuint fbo() const { return fstage_->fbo(); }
   GLuint buffer() const { return GL_COLOR_ATTACHMENT0; }
+  GLuint tex() const { return fstage_->texture(0); }
  private:
   std::unique_ptr<FragmentStage> fstage_;
   GLint uniform_mvp_matrix_;

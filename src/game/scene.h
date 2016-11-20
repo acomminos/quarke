@@ -4,7 +4,9 @@
 #include <map>
 #include <memory>
 #include <list>
+#include <vector>
 #include "game/camera.h"
+#include "game/input_controller.h"
 #include "geo/mesh.h"
 #include "mat/solid_material.h"
 #include "mat/textured_material.h"
@@ -46,6 +48,7 @@ class Scene {
   float rot; // tmp
   GLuint pepper_tex_; // tmp
   std::vector<pipe::PointLight> point_lights_;
+  std::vector<std::unique_ptr<InputController>> input_controllers_;
 
   // TODO: should we put the pipeline here?
   //       or move into separate pipeline class?

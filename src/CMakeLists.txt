@@ -18,6 +18,7 @@ set(QUARKE_SOURCES
     geo/mesh.cc
     geo/linked_mesh_collection.cc
     game/camera.cc
+    game/fps_input_controller.cc
     game/game.cc
     game/scene.cc
     util/toytga.cc

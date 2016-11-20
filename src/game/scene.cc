@@ -5,6 +5,7 @@
 #include "util/toytga.h"
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 
 namespace quarke {
 namespace game {
@@ -13,7 +14,8 @@ Scene::Scene(const Game& game, int width, int height)
   : game_(game)
   , camera_(width, height)
   , manual_control_(false)
-  , rot(0) {
+  , rot(0)
+  , active_stage_(COMPOSITE) {
 
   solid_material_ = std::make_unique<mat::SolidMaterial>();
 
@@ -73,50 +75,54 @@ void Scene::Update(float dt) {
   const float MANUAL_ROTATION_SPEED = glm::pi<float>()/3.f * dt; // in radians/s
   if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
     manual_control_ = true;
-    camera_.PostTranslate(glm::vec3(0, 0, MANUAL_TRANSLATE_SPEED));
+    position_ += eye_ * MANUAL_TRANSLATE_SPEED;
   }
   if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
     manual_control_ = true;
-    camera_.PostTranslate(glm::vec3(0, 0, -MANUAL_TRANSLATE_SPEED));
+    position_ += eye_ * -MANUAL_TRANSLATE_SPEED;
   }
   if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
     manual_control_ = true;
-    camera_.PostTranslate(glm::vec3(MANUAL_TRANSLATE_SPEED, 0, 0));
+    position_ += -glm::cross(eye_, glm::vec3(0, 1, 0)) * MANUAL_TRANSLATE_SPEED;
   }
   if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
     manual_control_ = true;
-    camera_.PostTranslate(glm::vec3(-MANUAL_TRANSLATE_SPEED, 0, 0));
+    position_ += glm::cross(eye_, glm::vec3(0, 1, 0)) * MANUAL_TRANSLATE_SPEED;
   }
   if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
     manual_control_ = true;
-    camera_.PostRotate(glm::vec3(1, 0, 0), -MANUAL_ROTATION_SPEED);
+    eye_ = glm::rotate(eye_, MANUAL_ROTATION_SPEED, glm::cross(eye_, glm::vec3(0, 1, 0)));
   }
   if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
     manual_control_ = true;
-    camera_.PostRotate(glm::vec3(1, 0, 0), MANUAL_ROTATION_SPEED);
+    eye_ = glm::rotate(eye_, -MANUAL_ROTATION_SPEED, glm::cross(eye_, glm::vec3(0, 1, 0)));
   }
   if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
     manual_control_ = true;
-    camera_.PostRotate(glm::vec3(0, 1, 0), -MANUAL_ROTATION_SPEED);
+    eye_ = glm::rotate(eye_, MANUAL_ROTATION_SPEED, glm::vec3(0, 1, 0));
   }
   if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
     manual_control_ = true;
-    camera_.PostRotate(glm::vec3(0, 1, 0), MANUAL_ROTATION_SPEED);
+    eye_ = glm::rotate(eye_, -MANUAL_ROTATION_SPEED, glm::vec3(0, 1, 0));
   }
 
+  eye_ = glm::normalize(eye_);
+
   // XXX: demo
-  if (manual_control_)
-    return;
+  if (!manual_control_) {
+    const float rot_speed = 1.2; // rotational speed in radians
+    const float rot_dist = 3.0;
+    const float base_z = -8.0;
+    const float base_y = 4.0;
+    const glm::vec3 target(0.0, 2.0, 0.0);
+    rot = rot + (dt * rot_speed);
+    float x = rot_dist * cos(rot);
+    float z = rot_dist * sin(rot);
+    position_ = glm::vec3(x, base_y, base_z + z);
+    eye_ = target - position_;
+  }
 
-  const float rot_speed = 1.2; // rotational speed in radians
-  const float rot_dist = 3.0;
-  const float base_z = -8.0;
-  const float base_y = 4.0;
-  rot = rot + (dt * rot_speed);
-  float x = rot_dist * cos(rot);
-  float z = rot_dist * sin(rot);
-
-  camera_.LookAt({ x, base_y, z + base_z }, { 0.0, 2.0, 0.0 }, { 0.0, 1.0, 0.0 });
+  camera_.LookAt(position_, position_ + eye_, { 0.0, 1.0, 0.0 });
 }
 
 void Scene::Render() {
@@ -186,50 +192,33 @@ void Scene::Render() {
   ssao_->Clear();
   ssao_->Render(camera_, lighting_->tex(), geom_->depth_tex());
 
-  // FIXME: this blit is the worst
   glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-  glBindFramebuffer(GL_READ_FRAMEBUFFER, geom_->fbo());
 
-  // Draw color buffer in bottom left
-  glReadBuffer(GL_COLOR_ATTACHMENT0);
-  glBlitFramebuffer(0, 0, width, height,
-                    0, 0, width/3, height/3,
-                    GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+  switch (active_stage_) {
+    case COMPOSITE:
+      // TODO: have an actual composite output. for now, just blit SSAO.
+      glBindFramebuffer(GL_READ_FRAMEBUFFER, lighting_->fbo());
+      glReadBuffer(lighting_->buffer());
+      break;
+    case ALBEDO:
+      glBindFramebuffer(GL_READ_FRAMEBUFFER, geom_->fbo());
+      glReadBuffer(geom_->color_buffer());
+      break;
+    case NORMAL:
+      glBindFramebuffer(GL_READ_FRAMEBUFFER, geom_->fbo());
+      glReadBuffer(geom_->normal_buffer());
+      break;
+    case POSITION:
+      glBindFramebuffer(GL_READ_FRAMEBUFFER, geom_->fbo());
+      glReadBuffer(geom_->position_buffer());
+      break;
+    case AMBIENT:
+      glBindFramebuffer(GL_READ_FRAMEBUFFER, ambient_->ambient_fbo());
+      glReadBuffer(ambient_->ambient_buffer());
+      break;
+  }
 
-  // Draw normal buffer in bottom middle
-  glReadBuffer(GL_COLOR_ATTACHMENT1);
-  glBlitFramebuffer(0, 0, width, height,
-                    width/3, 0, 2 * width / 3, height/3,
-                    GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-
-  // Draw position buffer in bottom right
-  glReadBuffer(GL_COLOR_ATTACHMENT2);
-  glBlitFramebuffer(0, 0, width, height,
-                    2 * width/3, 0, width, height/3,
-                    GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
-
-  // Draw ambient buffer in middle right
-  glBindFramebuffer(GL_READ_FRAMEBUFFER, ambient_->ambient_fbo());
-  glReadBuffer(ambient_->ambient_buffer());
-  glBlitFramebuffer(0, 0, width, height,
-                    2 * width / 3, height/3, width, 2 * height / 3,
-                    GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-  // Draw light buffer in middle right
-  glBindFramebuffer(GL_READ_FRAMEBUFFER, lighting_->fbo());
-  glReadBuffer(lighting_->buffer());
-  glBlitFramebuffer(0, 0, width, height,
-                    2 * width / 3, 2 * height/3, width, height,
-                    GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-  // Draw SSAO'd light buffer in top left
-  glBindFramebuffer(GL_READ_FRAMEBUFFER, ssao_->fbo());
-  glReadBuffer(ssao_->buffer());
-  glBlitFramebuffer(0, 0, width, height,
-                    0, height/3, 2 * width / 3, height,
-                    GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
-  // TODO: draw light buffer in top right, draw blended buffer in top left
+  glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 }
 
 void Scene::OnResize(int width, int height) {
@@ -241,6 +230,11 @@ void Scene::OnResize(int width, int height) {
 void Scene::OnKeyEvent(int key, int scancode, int action, int mods) {
   // TODO: one-off key event handling.
   //       for movement, use the main loop.
+  if (key >= GLFW_KEY_1 && key <= GLFW_KEY_9 &&
+      (key - GLFW_KEY_1 < NUM_STAGES)) {
+    // Stage selection shortcut
+    active_stage_ = (enum ActiveStage) (key - GLFW_KEY_1);
+  }
 }
 
 }  // namespace game

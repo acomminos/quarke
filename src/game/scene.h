@@ -41,6 +41,8 @@ class Scene {
   const Game& game_;
   Camera camera_;
   bool manual_control_; // true if the user has pressed a camera key.
+  glm::vec3 eye_; // normalized eye-target viewing vector
+  glm::vec3 position_; // position of camera
   float rot; // tmp
   GLuint pepper_tex_; // tmp
   std::vector<pipe::PointLight> point_lights_;
@@ -52,6 +54,17 @@ class Scene {
   std::unique_ptr<pipe::PhongStage> lighting_;
   std::unique_ptr<pipe::OmniShadowStage> omni_shadow_;
   std::unique_ptr<pipe::SSAOStage> ssao_;
+
+  // The primary stage to display.
+  // Each option corresponds to an offset from GLFW_KEY_1.
+  enum ActiveStage {
+    COMPOSITE = 0,
+    ALBEDO,
+    NORMAL,
+    POSITION,
+    AMBIENT,
+    NUM_STAGES
+  } active_stage_;
 
   geo::LinkedMeshCollection meshes_;
 

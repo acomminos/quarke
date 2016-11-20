@@ -83,6 +83,10 @@ class GeometryStage {
   GLuint depth_tex() const { return depth_tex_; }
   static GLuint depth_format() { return GL_DEPTH_COMPONENT; }
 
+  GLuint color_buffer() const { return GL_COLOR_ATTACHMENT0; }
+  GLuint normal_buffer() const { return GL_COLOR_ATTACHMENT1; }
+  GLuint position_buffer() const { return GL_COLOR_ATTACHMENT2; }
+
  private:
   void SetOutputSize(int width, int height);
 

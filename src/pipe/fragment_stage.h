@@ -23,6 +23,9 @@ class FragmentStage {
                 GLsizei num_outputs, GLuint depth_tex, GLuint vbo, GLuint vao);
   ~FragmentStage();
 
+  FragmentStage(FragmentStage&&) = delete;
+  FragmentStage(const FragmentStage&) = delete;
+
   // Resizes the light buffer to the given dimensions.
   // Implicitly clears the light buffer.
   void Resize(int width, int height);

@@ -5,27 +5,34 @@ namespace quarke {
 namespace game {
 
 bool FPSInputController::OnKeyEvent(int keycode, int action, int modifiers) {
-  // XXX: assumes maximum mask of 8 bits.
-  int press_mask = keycode != GLFW_RELEASE ? 0xFF : 0;
+  Direction dir;
   switch (keycode) {
     case GLFW_KEY_W:
-      direction_ = static_cast<Direction>((direction_ & ~FORWARD) |
-                                          (FORWARD & press_mask));
-      return true;
+      dir = FORWARD;
+      break;
     case GLFW_KEY_A:
-      direction_ = static_cast<Direction>((direction_ & ~LEFT) |
-                                          (LEFT & press_mask));
-      return true;
+      dir = LEFT;
+      break;
     case GLFW_KEY_S:
-      direction_ = static_cast<Direction>((direction_ & ~BACK) |
-                                          (BACK & press_mask));
-      return true;
+      dir = BACK;
+      break;
     case GLFW_KEY_D:
-      direction_ = static_cast<Direction>((direction_ & ~RIGHT) |
-                                          (RIGHT & press_mask));
-      return true;
+      dir = RIGHT;
+      break;
+    default:
+      return false;
   }
-  return false;
+
+  switch (action) {
+    case GLFW_PRESS:
+      key_start_times[dir] = glfwGetTime();
+      break;
+    case GLFW_RELEASE:
+      total_times[dir] += ClaimDeltaTime(dir);
+      break;
+  }
+
+  return true;
 }
 
 bool FPSInputController::OnMouseButton(int button, int action, int modifiers) {
@@ -40,6 +47,27 @@ bool FPSInputController::OnMouseButton(int button, int action, int modifiers) {
 
 bool FPSInputController::OnMouseMove(double x, double y) {
   return false;
+}
+
+FPSInputController::MovementEvent FPSInputController::ComputeMovementDeltas() {
+  MovementEvent event;
+  for (int i = 0; i < NUM_DIRECTIONS; i++) {
+    Direction dir = static_cast<Direction>(i);
+    event.time_elapsed[i] = total_times[i] + ClaimDeltaTime(dir);
+  }
+  // Clear deltas after claiming them.
+  memset(total_times, NO_TIME, sizeof(total_times));
+  return event;
+}
+
+double FPSInputController::ClaimDeltaTime(Direction dir) {
+  double start = key_start_times[dir];
+  if (start == NO_TIME) {
+    // We received a key release without a corresponding press, ignore.
+    return 0;
+  }
+  key_start_times[dir] = NO_TIME;
+  return glfwGetTime() - start;
 }
 
 }  // namespace game

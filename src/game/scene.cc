@@ -1,4 +1,5 @@
 #include "game/scene.h"
+#include "game/fps_input_controller.h"
 #include "game/game.h"
 #include "mat/solid_material.h"
 #include "mat/textured_material.h"
@@ -6,6 +7,7 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
+#include <iostream>
 
 namespace quarke {
 namespace game {
@@ -65,45 +67,45 @@ Scene::Scene(const Game& game, int width, int height)
   meshes_.AddMesh(textured_material_.get(), std::move(wall));
 
   point_lights_.push_back({1.0f, 30.0f, glm::vec3(0.f, 7.f, -5.f), glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)});
+
+  auto fps_input = std::make_unique<FPSInputController>();
+  fps_input_controller_ = fps_input.get();
+  input_controllers_.push_back(std::move(fps_input));
 }
 
 void Scene::Update(float dt) {
   GLFWwindow* window = game_.window();
 
   // TODO: migrate this to a demo input controller.
-  const float MANUAL_TRANSLATE_SPEED = 5.f * dt; // in world units/s
-  const float MANUAL_ROTATION_SPEED = glm::pi<float>()/3.f * dt; // in radians/s
-  if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+  const float MANUAL_TRANSLATE_SPEED = 5.f; // in world units/s
+  const float MANUAL_ROTATION_SPEED = glm::pi<float>()/3.f; // in radians/s
+
+  FPSInputController::MovementEvent event;
+  if (fps_input_controller_->ComputeMovementDeltas(event)) {
     manual_control_ = true;
-    position_ += eye_ * MANUAL_TRANSLATE_SPEED;
+    position_ += eye_ * event.time_elapsed[FORWARD] * MANUAL_TRANSLATE_SPEED;
+    position_ += eye_ * event.time_elapsed[BACK] * -MANUAL_TRANSLATE_SPEED;
+    position_ += -glm::cross(eye_, glm::vec3(0, 1, 0)) *
+                 event.time_elapsed[LEFT] * MANUAL_TRANSLATE_SPEED;
+    position_ += glm::cross(eye_, glm::vec3(0, 1, 0)) *
+                 event.time_elapsed[RIGHT] * MANUAL_TRANSLATE_SPEED;
   }
-  if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-    manual_control_ = true;
-    position_ += eye_ * -MANUAL_TRANSLATE_SPEED;
-  }
-  if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-    manual_control_ = true;
-    position_ += -glm::cross(eye_, glm::vec3(0, 1, 0)) * MANUAL_TRANSLATE_SPEED;
-  }
-  if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-    manual_control_ = true;
-    position_ += glm::cross(eye_, glm::vec3(0, 1, 0)) * MANUAL_TRANSLATE_SPEED;
-  }
+
   if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
     manual_control_ = true;
-    eye_ = glm::rotate(eye_, MANUAL_ROTATION_SPEED, glm::cross(eye_, glm::vec3(0, 1, 0)));
+    eye_ = glm::rotate(eye_, dt * MANUAL_ROTATION_SPEED, glm::cross(eye_, glm::vec3(0, 1, 0)));
   }
   if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
     manual_control_ = true;
-    eye_ = glm::rotate(eye_, -MANUAL_ROTATION_SPEED, glm::cross(eye_, glm::vec3(0, 1, 0)));
+    eye_ = glm::rotate(eye_, dt * -MANUAL_ROTATION_SPEED, glm::cross(eye_, glm::vec3(0, 1, 0)));
   }
   if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
     manual_control_ = true;
-    eye_ = glm::rotate(eye_, MANUAL_ROTATION_SPEED, glm::vec3(0, 1, 0));
+    eye_ = glm::rotate(eye_, dt * MANUAL_ROTATION_SPEED, glm::vec3(0, 1, 0));
   }
   if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
     manual_control_ = true;
-    eye_ = glm::rotate(eye_, -MANUAL_ROTATION_SPEED, glm::vec3(0, 1, 0));
+    eye_ = glm::rotate(eye_, dt * -MANUAL_ROTATION_SPEED, glm::vec3(0, 1, 0));
   }
 
   eye_ = glm::normalize(eye_);
@@ -234,6 +236,13 @@ void Scene::OnKeyEvent(int key, int scancode, int action, int mods) {
       (key - GLFW_KEY_1 < NUM_STAGES)) {
     // Stage selection shortcut
     active_stage_ = (enum ActiveStage) (key - GLFW_KEY_1);
+  }
+
+  // Iterate through inputs until a controller captures the event.
+  for (auto it = input_controllers_.rbegin(); it != input_controllers_.rend(); it++) {
+    if ((*it)->OnKeyEvent(key, action, mods)) {
+      break;
+    }
   }
 }
 

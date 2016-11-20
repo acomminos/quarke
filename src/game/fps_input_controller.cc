@@ -28,7 +28,7 @@ bool FPSInputController::OnKeyEvent(int keycode, int action, int modifiers) {
       key_start_times[dir] = glfwGetTime();
       break;
     case GLFW_RELEASE:
-      total_times[dir] += ClaimDeltaTime(dir);
+      total_times[dir] += ClaimDeltaTime(dir, true);
       break;
   }
 
@@ -49,24 +49,25 @@ bool FPSInputController::OnMouseMove(double x, double y) {
   return false;
 }
 
-FPSInputController::MovementEvent FPSInputController::ComputeMovementDeltas() {
-  MovementEvent event;
+bool FPSInputController::ComputeMovementDeltas(FPSInputController::MovementEvent& event) {
+  bool has_changes = false;
   for (int i = 0; i < NUM_DIRECTIONS; i++) {
     Direction dir = static_cast<Direction>(i);
-    event.time_elapsed[i] = total_times[i] + ClaimDeltaTime(dir);
+    event.time_elapsed[i] = total_times[i] + ClaimDeltaTime(dir, false);
+    has_changes |= event.time_elapsed[i] > 0;
   }
   // Clear deltas after claiming them.
-  memset(total_times, NO_TIME, sizeof(total_times));
-  return event;
+  memset(total_times, 0, sizeof(total_times));
+  return has_changes;
 }
 
-double FPSInputController::ClaimDeltaTime(Direction dir) {
+double FPSInputController::ClaimDeltaTime(Direction dir, bool release) {
   double start = key_start_times[dir];
-  if (start == NO_TIME) {
+  if (start == NO_START_TIME) {
     // We received a key release without a corresponding press, ignore.
     return 0;
   }
-  key_start_times[dir] = NO_TIME;
+  key_start_times[dir] = release ? NO_START_TIME : glfwGetTime();
   return glfwGetTime() - start;
 }
 
